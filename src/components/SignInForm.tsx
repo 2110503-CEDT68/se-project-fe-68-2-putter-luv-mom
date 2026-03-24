@@ -2,12 +2,14 @@
 import { signIn } from "next-auth/react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Toast from "@/components/Toast"
+import useToast from "@/hooks/useToast"
 
 export default function SignInForm() {
     const router = useRouter()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [error, setError] = useState("")
+    const { toast, showToast, hideToast } = useToast()
 
     const handleSubmit = async () => {
         const result = await signIn("credentials", {
@@ -17,9 +19,10 @@ export default function SignInForm() {
         })
 
         if (result?.error) {
-            setError("Invalid email or password")
+            showToast("Invalid email or password", "error")
         } else {
-            router.push("/")
+            showToast("Login successful!", "success")
+            setTimeout(() => router.push("/"), 1000)
         }
     }
 
@@ -31,6 +34,10 @@ export default function SignInForm() {
             alignItems: "center",
             justifyContent: "center",
         }}>
+            {toast && (
+                <Toast key={toast.id} message={toast.message} type={toast.type} onClose={hideToast} />
+            )}
+
             <div style={{
                 backgroundColor: "#2a2a2a",
                 padding: "48px 40px",
@@ -55,17 +62,6 @@ export default function SignInForm() {
                     }} />
                 </div>
 
-                {/* Error */}
-                {error && (
-                    <p style={{
-                        color: "#ff6b6b",
-                        fontSize: "13px",
-                        marginBottom: "12px",
-                        textAlign: "center",
-                    }}>{error}</p>
-                )}
-
-                {/* Form */}
                 <div>
                     {/* Email */}
                     <div style={{ marginBottom: "24px" }}>
@@ -109,7 +105,7 @@ export default function SignInForm() {
                         />
                     </div>
 
-                    {/* Sign In Button */}
+                    {/* Button */}
                     <button
                         type="button"
                         onClick={handleSubmit}

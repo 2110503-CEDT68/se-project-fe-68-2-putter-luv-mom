@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { Calendar, MapPin, Trash2, Pencil, Check, X } from "lucide-react";
+import { Calendar, Trash2, Pencil, Check, X, Hash } from "lucide-react";
 import dayjs, { Dayjs } from "dayjs";
 import DateReserve from "@/components/DateReserve";
 import getReservations from "@/libs/getReservations";
@@ -15,6 +15,7 @@ export default function BookingList() {
     const [loading, setLoading] = useState(true)
     const [editingId, setEditingId] = useState<string | null>(null)
     const [editDate, setEditDate] = useState<Dayjs | null>(null)
+    const [editTime, setEditTime] = useState("18:00")
 
     const token = (session?.user as any)?.token
 
@@ -46,7 +47,8 @@ export default function BookingList() {
     const handleSave = async (id: string) => {
         if (!editDate) return
         try {
-            await updateReservation(id, dayjs(editDate).toISOString(), token)
+            const dateTimeStr = `${dayjs(editDate).format("YYYY-MM-DD")}T${editTime}:00.000Z`
+            await updateReservation(id, dateTimeStr, token)
             setEditingId(null)
             fetchBookings()
         } catch (err: any) {
@@ -81,6 +83,15 @@ export default function BookingList() {
                                     <DateReserve onDateChange={(v) => setEditDate(v)} />
                                 </div>
                             </div>
+                            <div className="flex flex-col gap-1">
+                                <label className="text-gray-500 text-xs tracking-widest uppercase">New Time</label>
+                                <input
+                                    type="time"
+                                    value={editTime}
+                                    onChange={(e) => setEditTime(e.target.value)}
+                                    className="bg-[#1a1a1a] border border-gray-700 text-white text-sm px-4 py-2.5 outline-none focus:border-yellow-500 transition [color-scheme:dark]"
+                                />
+                            </div>
                             <div className="flex gap-2 justify-end">
                                 <button
                                     onClick={() => setEditingId(null)}
@@ -99,20 +110,35 @@ export default function BookingList() {
                     ) : (
                         <div className="flex justify-between items-center">
                             <div className="flex flex-col gap-2">
+                                {/* ชื่อร้าน */}
                                 <h3 className="text-yellow-500 text-lg">
                                     {item.restaurant?.name || item.restaurant}
                                 </h3>
+
+                                {/* วันเวลา */}
                                 <div className="flex items-center gap-2 text-gray-400 text-xs">
                                     <Calendar size={12} className="text-yellow-600/60" />
                                     {dayjs(item.reservationDate).format("DD MMM YYYY HH:mm")}
                                 </div>
+
+
+                                {/* Booking ID */}
+                                <div className="flex items-center gap-2 text-gray-600 text-xs font-mono">
+                                    <Hash size={12} className="text-yellow-600/40" />
+                                    {item._id}
+                                </div>
                             </div>
+
                             <div className="flex items-center gap-2">
                                 <span className="text-yellow-600/60 text-xs tracking-widest uppercase border border-yellow-600/20 px-3 py-1">
                                     Upcoming
                                 </span>
                                 <button
-                                    onClick={() => { setEditingId(item._id); setEditDate(null) }}
+                                    onClick={() => {
+                                        setEditingId(item._id)
+                                        setEditDate(null)
+                                        setEditTime(dayjs(item.reservationDate).format("HH:mm"))
+                                    }}
                                     className="p-2 border border-yellow-600/30 text-yellow-600/60 hover:border-yellow-500 hover:text-yellow-500 transition"
                                 >
                                     <Pencil size={14} />

@@ -26,7 +26,8 @@ export const authOptions: AuthOptions = {
                             name: userResponse.name,
                             email: userResponse.email,
                             token: userResponse.token,
-                            role: userResponse.role,  
+                            role: userResponse.role,
+                            ranking: userResponse.ranking,
                         }
                     }
                     return null
