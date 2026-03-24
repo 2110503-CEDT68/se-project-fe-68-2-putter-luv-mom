@@ -75,7 +75,7 @@ export default function BookingClient() {
             )}
             <div className="max-w-7xl px-6 mx-auto">
                 <p className="text-gray-600 text-xs tracking-widest uppercase mb-8">
-                    Home / <span className="text-gray-400 ml-1">Booking</span>
+                    Home / <span className="text-gray-400 ml-1">Reservation</span>
                 </p>
 
                 {/* Ranking limit info */}

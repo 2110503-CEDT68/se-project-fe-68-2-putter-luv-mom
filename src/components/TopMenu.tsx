@@ -1,6 +1,6 @@
-import TopMenuItem from './TopMenuItem';
-import AuthButton from './AuthButton';
 import Link from 'next/link';
+import AuthButton from './AuthButton';
+import { AudioWaveform, UtensilsCrossed, CalendarPlus, CalendarCheck } from 'lucide-react';
 
 export default function TopMenu() {
     return (
@@ -8,21 +8,67 @@ export default function TopMenu() {
             <div className="max-w-7xl mx-auto h-full px-6 flex justify-between items-center">
 
                 {/* Logo */}
-                <Link href="/">
-                    <div className='flex items-center gap-2'>
-                        <h1 className="font-playfair text-xl font-bold tracking-widest text-yellow-500">
-                            NEWWAVE
-                        </h1>
-                        <h3 className='text-white'>restaurant</h3>
-                    </div>
+                <Link href="/" className="flex items-center gap-2">
+                    <AudioWaveform className="text-yellow-500" size={22} />
+                    <h1 className="font-playfair text-xl font-bold tracking-widest text-yellow-500">
+                        NEWWAVE
+                    </h1>
                 </Link>
 
+                {/* Nav */}
                 <div className="flex items-center gap-2">
-                    <TopMenuItem title="Booking" href="/booking" />
-                    <TopMenuItem title="My Booking" href="/mybooking" />
+
+                    {/* Restaurants */}
+                    <Link
+                        href="/venue"
+                        className="group flex items-center gap-0 overflow-hidden
+                                   p-2 text-yellow-500 border border-yellow-500/50
+                                   hover:bg-yellow-500 hover:text-black
+                                   transition-all duration-300"
+                    >
+                        <UtensilsCrossed size={16} />
+                        <span className="max-w-0 group-hover:max-w-[100px] overflow-hidden
+                                         whitespace-nowrap transition-all duration-300
+                                         text-xs font-medium group-hover:ml-2">
+                            Restaurants
+                        </span>
+                    </Link>
+
+                    {/* New Reservation */}
+                    <Link
+                        href="/booking"
+                        className="group flex items-center gap-0 overflow-hidden
+                                   p-2 text-yellow-500 border border-yellow-500/50
+                                   hover:bg-yellow-500 hover:text-black
+                                   transition-all duration-300"
+                    >
+                        <CalendarPlus size={16} />
+                        <span className="max-w-0 group-hover:max-w-[140px] overflow-hidden
+                                         whitespace-nowrap transition-all duration-300
+                                         text-xs font-medium group-hover:ml-2">
+                            New Reservation
+                        </span>
+                    </Link>
+
+                    {/* My Reservations */}
+                    <Link
+                        href="/mybooking"
+                        className="group flex items-center gap-0 overflow-hidden
+                                   p-2 text-yellow-500 border border-yellow-500/50
+                                   hover:bg-yellow-500 hover:text-black
+                                   transition-all duration-300"
+                    >
+                        <CalendarCheck size={16} />
+                        <span className="max-w-0 group-hover:max-w-[140px] overflow-hidden
+                                         whitespace-nowrap transition-all duration-300
+                                         text-xs font-medium group-hover:ml-2">
+                            My Reservations
+                        </span>
+                    </Link>
+
                     <AuthButton />
                 </div>
             </div>
         </div>
-    );
+    )
 }

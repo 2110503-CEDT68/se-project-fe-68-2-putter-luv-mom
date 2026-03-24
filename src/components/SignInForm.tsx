@@ -4,11 +4,13 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Toast from "@/components/Toast"
 import useToast from "@/hooks/useToast"
+import { Mail, Lock, AudioWaveform } from "lucide-react"
 
 export default function SignInForm() {
     const router = useRouter()
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const { toast, showToast, hideToast } = useToast()
 
     const handleSubmit = async () => {
@@ -27,125 +29,91 @@ export default function SignInForm() {
     }
 
     return (
-        <div style={{
-            minHeight: "100vh",
-            backgroundColor: "#1a1a1a",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-        }}>
+        <div className="min-h-screen bg-black flex items-center justify-center px-4">
             {toast && (
                 <Toast key={toast.id} message={toast.message} type={toast.type} onClose={hideToast} />
             )}
 
-            <div style={{
-                backgroundColor: "#2a2a2a",
-                padding: "48px 40px",
-                width: "100%",
-                maxWidth: "380px",
-                borderRadius: "4px",
-            }}>
-                {/* Title */}
-                <div style={{ textAlign: "center", marginBottom: "36px" }}>
-                    <h1 style={{
-                        color: "#ffffff",
-                        fontSize: "36px",
-                        fontWeight: "400",
-                        fontFamily: "serif",
-                        marginBottom: "8px",
-                    }}>Login</h1>
-                    <div style={{
-                        width: "40px",
-                        height: "2px",
-                        backgroundColor: "#c8a84b",
-                        margin: "0 auto",
-                    }} />
+            <div className="w-full max-w-sm bg-[#0d0d0d] border border-yellow-600/20 px-8 py-10">
+
+                {/* Logo */}
+                <div className="flex flex-col items-center gap-3 mb-10">
+                    <div className="flex items-center gap-2">
+                        <AudioWaveform className="text-yellow-500" size={20} />
+                        <span className="font-playfair text-lg font-bold tracking-widest text-yellow-500">
+                            NEWWAVE
+                        </span>
+                    </div>
+                    <div className="h-px w-12 bg-yellow-500/40" />
+                    <p className="text-gray-500 text-xs tracking-[0.3em] uppercase">Member Sign In</p>
                 </div>
 
-                <div>
-                    {/* Email */}
-                    <div style={{ marginBottom: "24px" }}>
+                {/* Email */}
+                <div className="mb-6">
+                    <label className="text-gray-500 text-xs tracking-widest uppercase mb-2 block">
+                        Email
+                    </label>
+                    <div className="flex items-center gap-3 border-b border-gray-700 focus-within:border-yellow-500 transition-colors pb-2">
+                        <Mail size={14} className="text-gray-600 shrink-0" />
                         <input
                             type="email"
-                            placeholder="Email"
+                            placeholder="your@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            style={{
-                                width: "100%",
-                                backgroundColor: "transparent",
-                                border: "none",
-                                borderBottom: "1px solid #555",
-                                color: "#ffffff",
-                                fontSize: "14px",
-                                padding: "8px 0",
-                                outline: "none",
-                                boxSizing: "border-box",
-                            }}
+                            className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-700"
                         />
                     </div>
-
-                    {/* Password */}
-                    <div style={{ marginBottom: "32px" }}>
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            style={{
-                                width: "100%",
-                                backgroundColor: "transparent",
-                                border: "none",
-                                borderBottom: "1px solid #555",
-                                color: "#ffffff",
-                                fontSize: "14px",
-                                padding: "8px 0",
-                                outline: "none",
-                                boxSizing: "border-box",
-                            }}
-                        />
-                    </div>
-
-                    {/* Button */}
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        style={{
-                            width: "100%",
-                            padding: "14px",
-                            background: "linear-gradient(135deg, #c8a84b, #e8c55a, #c8a84b)",
-                            border: "none",
-                            borderRadius: "4px",
-                            color: "#1a1a1a",
-                            fontSize: "16px",
-                            fontWeight: "600",
-                            cursor: "pointer",
-                            marginBottom: "24px",
-                        }}
-                    >
-                        Sign In
-                    </button>
                 </div>
 
-                {/* Forgot Password */}
-                <div style={{ textAlign: "center", marginBottom: "12px" }}>
-                    <a href="#" style={{
-                        color: "#aaaaaa",
-                        fontSize: "13px",
-                        textDecoration: "none",
-                    }}>Forgot Password?</a>
+                {/* Password */}
+                <div className="mb-8">
+                    <label className="text-gray-500 text-xs tracking-widest uppercase mb-2 block">
+                        Password
+                    </label>
+                    <div className="flex items-center gap-3 border-b border-gray-700 focus-within:border-yellow-500 transition-colors pb-2">
+                        <Lock size={14} className="text-gray-600 shrink-0" />
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-700"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="text-gray-600 hover:text-gray-400 transition text-xs tracking-widest"
+                        >
+                            {showPassword ? "HIDE" : "SHOW"}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Button */}
+                <button
+                    type="button"
+                    onClick={handleSubmit}
+                    className="w-full py-3 bg-yellow-500 hover:bg-yellow-400
+                               text-black text-xs font-semibold
+                               tracking-[0.3em] uppercase
+                               transition-all duration-300 mb-6"
+                >
+                    Sign In
+                </button>
+
+                {/* Divider */}
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="flex-1 h-px bg-gray-800" />
+                    <span className="text-gray-700 text-xs">or</span>
+                    <div className="flex-1 h-px bg-gray-800" />
                 </div>
 
                 {/* Register */}
-                <div style={{ textAlign: "center" }}>
-                    <span style={{ color: "#aaaaaa", fontSize: "13px" }}>
-                        Don't have an account?{" "}
-                    </span>
-                    <a href="/register" style={{
-                        color: "#aaaaaa",
-                        fontSize: "13px",
-                        textDecoration: "none",
-                        display: "block",
-                    }}>Register</a>
+                <div className="text-center">
+                    <span className="text-gray-600 text-xs">Don't have an account? </span>
+                    <a href="/register" className="text-yellow-500 text-xs hover:underline tracking-widest uppercase">
+                        Register
+                    </a>
                 </div>
             </div>
         </div>

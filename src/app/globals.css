@@ -3,3 +3,10 @@
 .font-playfair {
   font-family: var(--font-playfair), serif;
 }
+/* globals.css */
+.MuiInputBase-input,
+.MuiInputBase-input.MuiInput-input,
+.MuiDateField-section {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}

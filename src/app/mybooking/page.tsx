@@ -20,7 +20,7 @@ export default async function MyBookingPage() {
                 <div className="flex justify-between items-end mb-10">
                     <div>
                         <h1 className="text-2xl text-yellow-500 font-normal">
-                            My Bookings
+                            My Reservations
                         </h1>
                         <p className="text-gray-600 text-xs tracking-widest uppercase mt-1">
                             Manage your reservations
@@ -34,7 +34,7 @@ export default async function MyBookingPage() {
                                    transition-all duration-200 tracking-widest uppercase"
                     >
                         <Plus size={14} />
-                        New Booking
+                        New Reservation
                     </Link>
                 </div>
 
