@@ -1,0 +1,156 @@
+@startuml Activity_MenuList
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam activityBorderColor #185FA5
+skinparam activityBackgroundColor #E6F1FB
+skinparam activityFontSize 13
+skinparam arrowColor #185FA5
+skinparam swimlaneBorderColor #B4B2A9
+skinparam swimlaneBackgroundColor #F1EFE8
+skinparam noteBorderColor #EF9F27
+skinparam noteBackgroundColor #FAEEDA
+
+title "Activity Diagram: Menu List Page (Admin)"
+
+|Admin|
+start
+
+:Navigate to Menu List page;
+
+|System|
+:Validate authentication token;
+
+if (Token valid?) then (Invalid)
+  :Redirect to Login page;
+  stop
+else (Valid)
+  :Check authorization (role / permission);
+endif
+
+if (Has permission?) then (No)
+  :Show 403 Unauthorized page;
+  stop
+else (Yes)
+  :Fetch menu data from API;
+endif
+
+if (Load successful?) then (Failed)
+  :Show error message;
+  :Show Retry button;
+
+  |Admin|
+  if (Click Retry?) then (Yes)
+    |System|
+    :Reload menu data;
+  else (No / Exit)
+    stop
+  endif
+else (Success)
+endif
+
+|System|
+:Display paginated Menu List table;
+note right
+  Columns displayed:
+  Name, Image, Price,
+  Category, Status, Actions
+end note
+
+|Admin|
+
+fork
+  :Type keyword in Search input;
+  |System|
+  :Filter list by keyword;
+fork again
+  :Select Category from dropdown;
+  |System|
+  :Filter list by category;
+fork again
+  :Select Status from dropdown;
+  |System|
+  :Filter list by status;
+fork again
+  :Select Sort option;
+  |System|
+  :Re-order the list;
+end fork
+
+|System|
+:Update displayed menu list;
+
+|Admin|
+:Select a menu item from the list;
+
+fork
+  :Click View Detail;
+  |System|
+  :Open detail modal / navigate to detail page;
+
+fork again
+  :Click Edit;
+  |System|
+  :Open Edit Menu form with existing data;
+
+  |Admin|
+  :Modify the desired fields;
+  :Click Save;
+
+  |System|
+  :Validate input data;
+
+  if (Valid?) then (Valid)
+    :Save updated data to database;
+    :Refresh the item in the table;
+    :Show success toast notification;
+  else (Invalid)
+    :Show validation error messages;
+  endif
+
+fork again
+  :Click Delete;
+  |System|
+  :Show Confirm Delete dialog;
+
+  |Admin|
+  if (Confirm delete?) then (Confirm)
+    |System|
+    :Delete menu item from database;
+    :Remove item from the table;
+    :Show success toast notification;
+  else (Cancel)
+    :Close dialog, no changes made;
+  endif
+
+fork again
+  :Click Add New Menu;
+  |System|
+  :Open Add Menu form (empty);
+
+  |Admin|
+  :Fill in required fields;
+  :Click Submit;
+
+  |System|
+  :Validate input data;
+
+  if (Valid?) then (Valid)
+    :Save new menu item to database;
+    :Add new item to the top of the table;
+    :Show success toast notification;
+  else (Invalid)
+    :Show validation error messages;
+  endif
+
+end fork
+
+|Admin|
+:Click page number (Pagination);
+
+|System|
+:Fetch next page of menu data;
+:Update displayed menu list;
+
+stop
+
+@enduml

@@ -1,0 +1,278 @@
+@startuml Sequence_MenuList
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam sequenceArrowColor #185FA5
+skinparam sequenceLifeLineBorderColor #888780
+skinparam sequenceParticipantBorderColor #185FA5
+skinparam sequenceParticipantBackgroundColor #E6F1FB
+skinparam sequenceParticipantFontColor #042C53
+skinparam sequenceActorBorderColor #185FA5
+skinparam sequenceActorFontSize 13
+skinparam noteBorderColor #EF9F27
+skinparam noteBackgroundColor #FAEEDA
+skinparam sequenceDividerBackgroundColor #D3D1C7
+
+title "Sequence Diagram: Menu List Page (Admin)"
+
+actor       "Admin"                  as admin
+participant "MenuListPage\n[Frontend]"  as page
+participant "MenuApiService\n[Frontend]" as apiSvc
+participant "MenuController\n[Backend]"  as ctrl
+participant "AuthService\n[Backend]"     as auth
+participant "MenuService\n[Backend]"     as beSvc
+participant "MenuRepository\n[Backend]"  as repo
+database    "Database"               as db
+
+' ══════════════════════════════════════════════
+== 1. Load Menu List ==
+' ══════════════════════════════════════════════
+
+admin -> page    : Navigate to Menu List page
+activate page
+
+page -> apiSvc   : getMenuList(defaultParams)
+activate apiSvc
+
+apiSvc -> ctrl   : GET /api/admin/menus\n[Authorization: Bearer <token>]
+activate ctrl
+
+ctrl -> auth     : validateToken(token)
+activate auth
+auth --> ctrl    : { valid: true, adminId, role }
+deactivate auth
+
+ctrl -> beSvc    : getMenuList(MenuListRequest)
+activate beSvc
+
+beSvc -> repo    : findAll(filters, pagination)
+activate repo
+
+repo -> db       : SELECT * FROM menus\nWHERE ... LIMIT ? OFFSET ?
+activate db
+db --> repo      : Menu records
+deactivate db
+
+repo -> db       : SELECT COUNT(*) FROM menus WHERE ...
+activate db
+db --> repo      : totalCount
+deactivate db
+
+repo --> beSvc   : { menus[], totalCount }
+deactivate repo
+
+beSvc --> ctrl   : MenuListResponse { items, totalItems, totalPages, currentPage }
+deactivate beSvc
+
+ctrl --> apiSvc  : HTTP 200 OK { data: MenuListResponse }
+deactivate ctrl
+
+apiSvc --> page  : MenuListResponse
+deactivate apiSvc
+
+page -> admin    : Display paginated Menu List table
+deactivate page
+
+' ══════════════════════════════════════════════
+== 2. Search / Filter / Sort ==
+' ══════════════════════════════════════════════
+
+admin -> page    : Type keyword / Select filter / Select sort
+activate page
+
+page -> page     : Update FilterState (keyword, category, status, sortBy)
+
+page -> apiSvc   : getMenuList({ keyword, categoryId,\n  status, sortBy, sortOrder, page: 1 })
+activate apiSvc
+
+apiSvc -> ctrl   : GET /api/admin/menus?keyword=...&category=...&...
+activate ctrl
+
+ctrl -> beSvc    : getMenuList(updatedRequest)
+activate beSvc
+
+beSvc -> repo    : findAll(newFilters, pagination)
+activate repo
+repo -> db       : SELECT * FROM menus\nWHERE name LIKE ? AND category_id = ?\nORDER BY ? LIMIT ? OFFSET ?
+activate db
+db --> repo      : Filtered menu records
+deactivate db
+repo --> beSvc   : { menus[], totalCount }
+deactivate repo
+
+beSvc --> ctrl   : MenuListResponse
+deactivate beSvc
+ctrl --> apiSvc  : HTTP 200 OK { data: MenuListResponse }
+deactivate ctrl
+apiSvc --> page  : Updated MenuListResponse
+deactivate apiSvc
+
+page -> admin    : Refresh table with filtered results
+deactivate page
+
+' ══════════════════════════════════════════════
+== 3. View Menu Detail ==
+' ══════════════════════════════════════════════
+
+admin -> page    : Click View on a menu item
+activate page
+
+page -> apiSvc   : getMenuById(menuId)
+activate apiSvc
+apiSvc -> ctrl   : GET /api/admin/menus/:id
+activate ctrl
+
+ctrl -> auth     : validateToken(token)
+activate auth
+auth --> ctrl    : { valid: true }
+deactivate auth
+
+ctrl -> beSvc    : getMenuById(id)
+activate beSvc
+beSvc -> repo    : findById(id)
+activate repo
+repo -> db       : SELECT * FROM menus WHERE id = ?
+activate db
+db --> repo      : Menu record
+deactivate db
+repo --> beSvc   : Menu entity
+deactivate repo
+beSvc --> ctrl   : MenuDTO
+deactivate beSvc
+ctrl --> apiSvc  : HTTP 200 OK { data: MenuDTO }
+deactivate ctrl
+apiSvc --> page  : MenuDTO
+deactivate apiSvc
+
+page -> admin    : Open detail modal with full menu information
+deactivate page
+
+' ══════════════════════════════════════════════
+== 4. Edit Menu ==
+' ══════════════════════════════════════════════
+
+admin -> page    : Click Edit on a menu item
+activate page
+page -> admin    : Open MenuFormModal (mode = EDIT)\npre-filled with existing data
+
+admin -> page    : Modify fields and click Save
+page -> page     : validate() => true
+
+page -> apiSvc   : updateMenu(menuId, updatedDTO)
+activate apiSvc
+
+apiSvc -> ctrl   : PUT /api/admin/menus/:id\n{ body: updatedMenuDTO }
+activate ctrl
+
+ctrl -> auth     : checkPermission(admin, "EDIT_MENU")
+activate auth
+auth --> ctrl    : { allowed: true }
+deactivate auth
+
+ctrl -> beSvc    : updateMenu(id, data)
+activate beSvc
+beSvc -> repo    : update(id, menuEntity)
+activate repo
+repo -> db       : UPDATE menus SET name=?, price=?,\ncategory_id=?, status=?\nWHERE id = ?
+activate db
+db --> repo      : Updated record
+deactivate db
+repo --> beSvc   : Updated Menu entity
+deactivate repo
+beSvc --> ctrl   : Updated MenuDTO
+deactivate beSvc
+ctrl --> apiSvc  : HTTP 200 OK { data: updatedMenuDTO }
+deactivate ctrl
+apiSvc --> page  : Updated MenuDTO
+deactivate apiSvc
+
+page -> page     : Replace item in the table list
+page -> admin    : Close modal + Show success toast "Menu updated successfully"
+deactivate page
+
+' ══════════════════════════════════════════════
+== 5. Delete Menu ==
+' ══════════════════════════════════════════════
+
+admin -> page    : Click Delete on a menu item
+activate page
+page -> admin    : Show Confirm Delete dialog
+
+admin -> page    : Click Confirm
+activate page
+
+page -> apiSvc   : deleteMenu(menuId)
+activate apiSvc
+
+apiSvc -> ctrl   : DELETE /api/admin/menus/:id
+activate ctrl
+
+ctrl -> auth     : checkPermission(admin, "DELETE_MENU")
+activate auth
+auth --> ctrl    : { allowed: true }
+deactivate auth
+
+ctrl -> beSvc    : deleteMenu(id)
+activate beSvc
+beSvc -> repo    : delete(id)
+activate repo
+repo -> db       : DELETE FROM menus WHERE id = ?
+activate db
+db --> repo      : Deleted successfully
+deactivate db
+repo --> beSvc   : void
+deactivate repo
+beSvc --> ctrl   : void
+deactivate beSvc
+ctrl --> apiSvc  : HTTP 204 No Content
+deactivate ctrl
+apiSvc --> page  : Success
+deactivate apiSvc
+
+page -> page     : Remove item from table list
+page -> admin    : Show success toast "Menu deleted successfully"
+deactivate page
+
+' ══════════════════════════════════════════════
+== 6. Add New Menu ==
+' ══════════════════════════════════════════════
+
+admin -> page    : Click Add New Menu button
+activate page
+page -> admin    : Open MenuFormModal (mode = CREATE, empty form)
+
+admin -> page    : Fill in required fields and click Submit
+page -> page     : validate() => true
+
+page -> apiSvc   : createMenu(newMenuDTO)
+activate apiSvc
+
+apiSvc -> ctrl   : POST /api/admin/menus\n{ body: newMenuDTO }
+activate ctrl
+
+ctrl -> auth     : checkPermission(admin, "CREATE_MENU")
+activate auth
+auth --> ctrl    : { allowed: true }
+deactivate auth
+
+ctrl -> beSvc    : createMenu(data)
+activate beSvc
+beSvc -> repo    : save(newMenuEntity)
+activate repo
+repo -> db       : INSERT INTO menus\n(name, price, category_id, status, ...)\nVALUES (?, ?, ?, ?, ...)
+activate db
+db --> repo      : New record with generated id
+deactivate db
+repo --> beSvc   : Created Menu entity
+deactivate repo
+beSvc --> ctrl   : New MenuDTO
+deactivate beSvc
+ctrl --> apiSvc  : HTTP 201 Created { data: newMenuDTO }
+deactivate ctrl
+apiSvc --> page  : New MenuDTO
+deactivate apiSvc
+
+page -> page     : Prepend new item to the top of the table
+page -> admin    : Close modal + Show success toast "Menu created successfully"
+deactivate page
+
+@enduml

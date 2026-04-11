@@ -1,0 +1,255 @@
+@startuml Class_MenuList
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam classBorderColor #185FA5
+skinparam classBackgroundColor #E6F1FB
+skinparam classHeaderBackgroundColor #185FA5
+skinparam classFontColor #042C53
+skinparam classHeaderFontColor #FFFFFF
+skinparam arrowColor #185FA5
+skinparam noteBorderColor #EF9F27
+skinparam noteBackgroundColor #FAEEDA
+
+title "Class Diagram: Menu List Page (Admin)"
+
+' ─── Enumerations ───────────────────────────────────────────
+
+enum MenuStatus {
+  ACTIVE
+  INACTIVE
+  OUT_OF_STOCK
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  RESTAURANT_ADMIN
+  STAFF
+}
+
+enum FormMode {
+  CREATE
+  EDIT
+  VIEW
+}
+
+' ─── Domain Models ──────────────────────────────────────────
+
+class Menu {
+  - id           : UUID
+  - name         : String
+  - description  : String
+  - price        : Decimal
+  - imageUrl     : String
+  - status       : MenuStatus
+  - restaurantId : UUID
+  - categoryId   : UUID
+  - createdAt    : DateTime
+  - updatedAt    : DateTime
+  + getId()      : UUID
+  + getName()    : String
+  + getPrice()   : Decimal
+  + isActive()   : Boolean
+  + toDTO()      : MenuDTO
+}
+
+class Category {
+  - id           : UUID
+  - name         : String
+  - iconUrl      : String
+  + getId()      : UUID
+  + getName()    : String
+}
+
+class Restaurant {
+  - id           : UUID
+  - name         : String
+  - logoUrl      : String
+  + getId()      : UUID
+  + getName()    : String
+}
+
+class Admin {
+  - id           : UUID
+  - username     : String
+  - email        : String
+  - role         : AdminRole
+  - token        : String
+  + getId()      : UUID
+  + hasPermission(permission: String) : Boolean
+}
+
+' ─── DTOs ───────────────────────────────────────────────────
+
+class MenuDTO {
+  + id           : String
+  + name         : String
+  + description  : String
+  + price        : Number
+  + imageUrl     : String
+  + categoryId   : String
+  + categoryName : String
+  + status       : String
+  + restaurantId : String
+}
+
+class MenuListRequest {
+  + page         : Integer
+  + pageSize     : Integer
+  + keyword      : String
+  + categoryId   : String
+  + status       : String
+  + sortBy       : String
+  + sortOrder    : String
+}
+
+class MenuListResponse {
+  + items        : List<MenuDTO>
+  + totalItems   : Integer
+  + totalPages   : Integer
+  + currentPage  : Integer
+  + pageSize     : Integer
+}
+
+' ─── UI Components ──────────────────────────────────────────
+
+class MenuListPage {
+  - menus        : List<MenuDTO>
+  - isLoading    : Boolean
+  - totalItems   : Integer
+  - currentPage  : Integer
+  - filters      : FilterState
+  + onSearch(keyword: String)       : void
+  + onFilterCategory(id: String)    : void
+  + onFilterStatus(status: String)  : void
+  + onSort(field: String)           : void
+  + onPageChange(page: Integer)     : void
+  + onAddMenu()                     : void
+  + onEditMenu(id: String)          : void
+  + onDeleteMenu(id: String)        : void
+  + render()                        : ReactNode
+}
+
+class MenuTableComponent {
+  - items        : List<MenuDTO>
+  - sortConfig   : SortConfig
+  + onSort(field: String)           : void
+  + onSelectRow(id: String)         : void
+  + render()                        : ReactNode
+}
+
+class SearchFilterBar {
+  - keyword           : String
+  - selectedCategory  : String
+  - selectedStatus    : String
+  + onKeywordChange(value: String)  : void
+  + onCategoryChange(value: String) : void
+  + onStatusChange(value: String)   : void
+  + onClear()                       : void
+  + render()                        : ReactNode
+}
+
+class PaginationComponent {
+  - currentPage  : Integer
+  - totalPages   : Integer
+  - pageSize     : Integer
+  + onPageChange(page: Integer)     : void
+  + onPageSizeChange(size: Integer) : void
+  + render()                        : ReactNode
+}
+
+class MenuFormModal {
+  - mode         : FormMode
+  - menuData     : MenuDTO
+  - errors       : Map<String, String>
+  + onSubmit(data: MenuDTO) : void
+  + onClose()               : void
+  + validate()              : Boolean
+  + render()                : ReactNode
+}
+
+class ConfirmDialog {
+  - title        : String
+  - message      : String
+  - isOpen       : Boolean
+  + onConfirm()  : void
+  + onCancel()   : void
+  + render()     : ReactNode
+}
+
+' ─── Services (Frontend) ────────────────────────────────────
+
+class MenuApiService {
+  + getMenuList(request: MenuListRequest)       : Promise<MenuListResponse>
+  + getMenuById(id: String)                     : Promise<MenuDTO>
+  + createMenu(data: MenuDTO)                   : Promise<MenuDTO>
+  + updateMenu(id: String, data: MenuDTO)       : Promise<MenuDTO>
+  + deleteMenu(id: String)                      : Promise<void>
+}
+
+' ─── Backend Controller ─────────────────────────────────────
+
+class MenuController {
+  - menuService  : MenuService
+  - authService  : AuthService
+  + listMenus(request: Request)                        : Response
+  + getMenu(id: String, request: Request)              : Response
+  + createMenu(data: MenuDTO, request: Request)        : Response
+  + updateMenu(id: String, data: MenuDTO, req: Request): Response
+  + deleteMenu(id: String, request: Request)           : Response
+}
+
+' ─── Services (Backend) ─────────────────────────────────────
+
+class MenuService {
+  - menuRepository : MenuRepository
+  + getMenuList(request: MenuListRequest) : MenuListResponse
+  + getMenuById(id: UUID)                 : MenuDTO
+  + createMenu(data: MenuDTO)             : MenuDTO
+  + updateMenu(id: UUID, data: MenuDTO)   : MenuDTO
+  + deleteMenu(id: UUID)                  : void
+}
+
+class AuthService {
+  + validateToken(token: String)                        : Boolean
+  + checkPermission(admin: Admin, permission: String)   : Boolean
+}
+
+' ─── Repository ─────────────────────────────────────────────
+
+class MenuRepository {
+  - dbConnection : DBConnection
+  + findAll(request: MenuListRequest) : List<Menu>
+  + findById(id: UUID)                : Menu
+  + save(menu: Menu)                  : Menu
+  + update(id: UUID, menu: Menu)      : Menu
+  + delete(id: UUID)                  : void
+  + count(filters: Map)               : Integer
+}
+
+' ─── Relationships ──────────────────────────────────────────
+
+Menu        "1" --> "1"   Category        : belongs to
+Menu        "1" --> "1"   Restaurant      : belongs to
+Menu        "1" --> "1"   MenuStatus      : has status
+
+Admin       "1" --> "1"   AdminRole       : has role
+
+MenuController  -->       MenuService     : uses
+MenuController  -->       AuthService     : uses
+
+MenuService     -->       MenuRepository  : uses
+MenuService     ..>       MenuListResponse : returns
+MenuService     ..>       MenuDTO         : maps to
+
+MenuRepository  ..>       Menu            : manages
+
+MenuListPage    -->       MenuTableComponent   : contains
+MenuListPage    -->       SearchFilterBar      : contains
+MenuListPage    -->       PaginationComponent  : contains
+MenuListPage    -->       MenuFormModal        : opens
+MenuListPage    -->       ConfirmDialog        : opens
+MenuListPage    -->       MenuApiService       : calls
+
+MenuFormModal   -->       FormMode        : uses
+
+@enduml

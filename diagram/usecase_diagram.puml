@@ -1,0 +1,58 @@
+@startuml UseCase_MenuList
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam actorStyle awesome
+skinparam usecaseBorderColor #5F5E5A
+skinparam usecaseBackgroundColor #E6F1FB
+skinparam usecaseFontSize 13
+skinparam arrowColor #185FA5
+skinparam actorBorderColor #185FA5
+skinparam actorFontSize 13
+
+title "Use Case Diagram: Menu List Page (Admin)"
+
+left to right direction
+
+actor "Admin" as admin
+actor "Restaurant System" as system <<system>>
+
+rectangle "Menu Management System" {
+
+  usecase "View Menu List"          as UC01
+  usecase "Search Menu"             as UC02
+  usecase "Filter Menu by Category" as UC03
+  usecase "Filter Menu by Status"   as UC04
+  usecase "Sort Menu"               as UC05
+  usecase "View Menu Detail"        as UC06
+  usecase "Edit Menu"               as UC07
+  usecase "Delete Menu"             as UC08
+  usecase "Add New Menu"            as UC09
+  usecase "Export Menu List"        as UC10
+  usecase "Load Menu Data"          as UC11
+  usecase "Validate Permission"     as UC12
+
+}
+
+admin   --> UC01 : browse
+admin   --> UC02 : search
+admin   --> UC03 : filter
+admin   --> UC04 : filter
+admin   --> UC05 : sort
+admin   --> UC06 : click item
+admin   --> UC07 : select action
+admin   --> UC08 : select action
+admin   --> UC09 : click Add
+admin   --> UC10 : export
+
+UC01 ..> UC11 : <<include>>
+UC01 ..> UC12 : <<include>>
+UC02 ..> UC01 : <<extend>>
+UC03 ..> UC01 : <<extend>>
+UC04 ..> UC01 : <<extend>>
+UC05 ..> UC01 : <<extend>>
+UC07 ..> UC01 : <<extend>>
+UC08 ..> UC01 : <<extend>>
+
+system --> UC11 : provide data
+
+@enduml

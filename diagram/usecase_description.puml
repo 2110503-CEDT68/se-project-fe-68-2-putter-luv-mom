@@ -1,0 +1,176 @@
+@startuml UseCase_Description
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam noteBorderColor #185FA5
+skinparam noteBackgroundColor #E6F1FB
+skinparam noteFontSize 12
+
+title "Use Case Description: Menu List Page (Admin)"
+
+note as UC01
+  Use Case ID     : UC01
+  Use Case Name   : View Menu List
+  Actor           : Admin
+  Description     : Admin views all menu items across restaurants
+                    to manage or find any specific menu item.
+  Preconditions   : 1. Admin is authenticated and logged in.
+                    2. Admin has permission to access the Menu page.
+  Postconditions  : Menu list is displayed on screen with pagination.
+  ----
+  Main Flow:
+    1. Admin navigates to the Menu List page.
+    2. System validates the Admin authentication token.
+    3. System checks Admin authorization (role/permission).
+    4. System fetches menu data from the database.
+    5. System displays the menu list with the following fields:
+       Name, Image, Price, Category, Status, Actions.
+    6. Admin can proceed to search, filter, sort, or manage items.
+  ----
+  Alternative Flow:
+    4a. No menu data found:
+        - System displays "No menu items found."
+    4b. Data load fails:
+        - System displays an error message.
+        - Admin can click Retry to reload.
+  ----
+  Exception Flow:
+    3a. Admin has no permission:
+        - System redirects to 403 Unauthorized page.
+  ----
+  Business Rules  : BR01 - Display menus from all restaurants in the system.
+                    BR02 - Default pagination shows 20 items per page.
+                    BR03 - Default sort order is Latest Updated Date.
+  Non-Functional  : Response time must be under 3 seconds.
+                    System must support over 10,000 menu records.
+end note
+
+note as UC02
+  Use Case ID     : UC02
+  Use Case Name   : Search Menu
+  Actor           : Admin
+  Description     : Admin searches for menu items using a keyword.
+  Preconditions   : UC01 has been completed successfully.
+  Postconditions  : Filtered menu list matching keyword is displayed.
+  ----
+  Main Flow:
+    1. Admin types a keyword into the Search input.
+    2. System filters menu items matching the keyword.
+    3. System updates and displays the search results.
+    4. System shows total number of results found.
+  ----
+  Alternative Flow:
+    3a. No results found:
+        - System displays "No results for [keyword]."
+  ----
+  Search Fields   : Menu Name, Description, Category Name.
+end note
+
+note as UC03
+  Use Case ID     : UC03
+  Use Case Name   : Filter Menu by Category
+  Actor           : Admin
+  Description     : Admin filters the menu list by a specific category.
+  Preconditions   : UC01 has been completed successfully.
+  Postconditions  : Menu list shows only items in the selected category.
+  ----
+  Main Flow:
+    1. Admin selects a category from the Category dropdown.
+    2. System applies the category filter.
+    3. System displays only menus in that category.
+  ----
+  Alternative Flow:
+    3a. No items in selected category:
+        - System displays "No items found in this category."
+end note
+
+note as UC04
+  Use Case ID     : UC04
+  Use Case Name   : Filter Menu by Status
+  Actor           : Admin
+  Description     : Admin filters the menu list by status (Active / Inactive).
+  Preconditions   : UC01 has been completed successfully.
+  Postconditions  : Menu list shows only items with the selected status.
+  ----
+  Main Flow:
+    1. Admin selects a status from the Status dropdown.
+    2. System applies the status filter.
+    3. System displays filtered results.
+end note
+
+note as UC07
+  Use Case ID     : UC07
+  Use Case Name   : Edit Menu
+  Actor           : Admin
+  Description     : Admin edits an existing menu item's information.
+  Preconditions   : Admin can see the menu list from UC01.
+  Postconditions  : Menu item is updated and reflected in the list.
+  ----
+  Main Flow:
+    1. Admin clicks the Edit button on a menu item.
+    2. System opens the Edit Menu form pre-filled with existing data.
+    3. Admin modifies the desired fields.
+    4. Admin clicks Save.
+    5. System validates the input data.
+    6. System saves the changes and updates the table.
+    7. System shows a success notification.
+  ----
+  Alternative Flow:
+    5a. Validation fails:
+        - System shows error messages below the invalid fields.
+    6a. Save fails (server error):
+        - System shows an error toast notification.
+  ----
+  Business Rules  : BR04 - Menu name must be unique within the restaurant.
+                    BR05 - Price must be a positive number.
+end note
+
+note as UC08
+  Use Case ID     : UC08
+  Use Case Name   : Delete Menu
+  Actor           : Admin
+  Description     : Admin permanently removes a menu item from the system.
+  Preconditions   : Admin can see the menu list from UC01.
+  Postconditions  : Menu item is removed and no longer shown in the list.
+  ----
+  Main Flow:
+    1. Admin clicks the Delete button on a menu item.
+    2. System shows a Confirm Delete dialog.
+    3. Admin confirms the deletion.
+    4. System deletes the menu item from the database.
+    5. System removes the item from the table.
+    6. System shows a success notification.
+  ----
+  Alternative Flow:
+    3a. Admin cancels:
+        - Dialog closes, no changes are made.
+  ----
+  Business Rules  : BR06 - Deleted menus cannot be recovered.
+end note
+
+note as UC09
+  Use Case ID     : UC09
+  Use Case Name   : Add New Menu
+  Actor           : Admin
+  Description     : Admin creates a new menu item in the system.
+  Preconditions   : Admin has "Create Menu" permission.
+  Postconditions  : New menu item is saved and shown in the list.
+  ----
+  Main Flow:
+    1. Admin clicks the Add New Menu button.
+    2. System opens the Add Menu form (empty).
+    3. Admin fills in all required fields:
+       Name, Price, Category, Image, Status.
+    4. Admin clicks Submit.
+    5. System validates the input.
+    6. System saves the new menu item.
+    7. System adds the item to the top of the list.
+    8. System shows a success notification.
+  ----
+  Alternative Flow:
+    5a. Validation fails:
+        - System highlights invalid fields with error messages.
+  ----
+  Required Fields : Name, Price, Category, Status.
+end note
+
+@enduml
