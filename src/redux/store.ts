@@ -1,5 +1,6 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import bookSlice from "./features/bookSlice";
+import preorderSlice from "./features/preorderSlice";
 import { useSelector, TypedUseSelectorHook } from "react-redux";
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist";
 import storage from "redux-persist/lib/storage";
@@ -10,7 +11,8 @@ const persistConfig = {
 };
 
 const rootReducer = combineReducers({
-    bookSlice
+    bookSlice,
+    preorder: preorderSlice,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
