@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { MenuItem, deleteMenu } from '@/libs/getMenus'
-import ConfirmDialog from './ConfirmDialog'
+import { useMenuFilter } from '@/hooks/useMenuFilter'
+import DeleteButton from './DeleteButton'
 import Link from 'next/link'
 
 interface MenuListProps {
@@ -11,57 +11,14 @@ interface MenuListProps {
   onDeleted: (id: string) => void
 }
 
-type SortField = 'name' | 'price' | 'category'
-type SortOrder = 'asc' | 'desc'
-
 export default function MenuList({ menus, token, onDeleted }: MenuListProps) {
-  const [search, setSearch] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [sortField, setSortField] = useState<SortField>('name')
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc')
-  const [deleteTarget, setDeleteTarget] = useState<MenuItem | null>(null)
-  const [deleting, setDeleting] = useState(false)
-
-  const categories = Array.from(new Set(menus.map((m) => m.category))).sort()
-
-  const filtered = menus
-    .filter((m) => {
-      const matchSearch = m.name.toLowerCase().includes(search.toLowerCase())
-      const matchCategory = !categoryFilter || m.category === categoryFilter
-      return matchSearch && matchCategory
-    })
-    .sort((a, b) => {
-      const aVal = sortField === 'price' ? a.price : a[sortField]
-      const bVal = sortField === 'price' ? b.price : b[sortField]
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortField(field)
-      setSortOrder('asc')
-    }
-  }
-
-  const handleConfirmDelete = async () => {
-    if (!deleteTarget) return
-    setDeleting(true)
-    try {
-      await deleteMenu(token, deleteTarget._id)
-      onDeleted(deleteTarget._id)
-    } finally {
-      setDeleting(false)
-      setDeleteTarget(null)
-    }
-  }
-
-  const sortArrow = (field: SortField) =>
-    sortField === field ? (sortOrder === 'asc' ? ' ↑' : ' ↓') : ''
-
+  const {
+    search, setSearch,
+    categoryFilter, setCategoryFilter,
+    toggleSort, sortArrow,
+    categories,
+    filtered,
+  } = useMenuFilter(menus)
   return (
     <div>
       {/* Filters */}
@@ -90,13 +47,13 @@ export default function MenuList({ menus, token, onDeleted }: MenuListProps) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-700 text-zinc-400 text-left">
-              <th className="pb-2 pr-4 cursor-pointer hover:text-yellow-400" onClick={() => handleSort('name')}>
+              <th className="pb-2 pr-4 cursor-pointer hover:text-yellow-400" onClick={() => toggleSort('name')}>
                 Name{sortArrow('name')}
               </th>
-              <th className="pb-2 pr-4 cursor-pointer hover:text-yellow-400" onClick={() => handleSort('category')}>
+              <th className="pb-2 pr-4 cursor-pointer hover:text-yellow-400" onClick={() => toggleSort('category')}>
                 Category{sortArrow('category')}
               </th>
-              <th className="pb-2 pr-4 cursor-pointer hover:text-yellow-400" onClick={() => handleSort('price')}>
+              <th className="pb-2 pr-4 cursor-pointer hover:text-yellow-400" onClick={() => toggleSort('price')}>
                 Price{sortArrow('price')}
               </th>
               <th className="pb-2">Actions</th>
@@ -115,26 +72,19 @@ export default function MenuList({ menus, token, onDeleted }: MenuListProps) {
                   >
                     Edit
                   </Link>
-                  <button
-                    onClick={() => setDeleteTarget(menu)}
-                    className="px-3 py-1 text-xs border border-red-700 text-red-400 rounded hover:bg-red-900/30 transition"
-                  >
-                    Delete
-                  </button>
+                  <DeleteButton
+                    itemName={menu.name}
+                    onConfirm={async () => {
+                      await deleteMenu(token, menu._id)
+                      onDeleted(menu._id)
+                    }}
+                  />
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-
-      <ConfirmDialog
-        open={!!deleteTarget}
-        title="Delete Menu Item"
-        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
-        onConfirm={handleConfirmDelete}
-        onCancel={() => !deleting && setDeleteTarget(null)}
-      />
     </div>
   )
 }
