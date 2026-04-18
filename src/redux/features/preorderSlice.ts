@@ -41,10 +41,30 @@ const preorderSlice = createSlice({
     clearPreorder(state) {
       state.items = []
     },
+    removeAllByVenue(state, action: PayloadAction<string>) {
+      state.items = state.items.filter((item) => item.venueId !== action.payload)
+    },
+    setQuantityBounded(
+      state,
+      action: PayloadAction<{ id: string; quantity: number; min?: number; max?: number }>
+    ) {
+      const item = state.items.find((i) => i.id === action.payload.id)
+      if (item) {
+        const min = action.payload.min ?? 1
+        const max = action.payload.max ?? 99
+        item.quantity = Math.min(max, Math.max(min, action.payload.quantity))
+      }
+    },
   },
 })
 
-export const { addToPreorder, removeFromPreorder, updateQuantity, clearPreorder } =
-  preorderSlice.actions
+export const {
+  addToPreorder,
+  removeFromPreorder,
+  updateQuantity,
+  clearPreorder,
+  removeAllByVenue,
+  setQuantityBounded,
+} = preorderSlice.actions
 
 export default preorderSlice.reducer
