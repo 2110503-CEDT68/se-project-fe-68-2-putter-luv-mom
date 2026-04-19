@@ -2,9 +2,10 @@
 
 import { usePreorder } from '@/hooks/usePreorder'
 import PreorderItemRow from './PreorderItem'
+import PreorderSummary from './PreorderSummary'
 
 export default function PreorderList() {
-  const { items, total, itemCount, remove, setQuantity, clear } = usePreorder()
+  const { items, itemCount, remove, setQuantity, clear } = usePreorder()
 
   if (items.length === 0) {
     return (
@@ -41,10 +42,7 @@ export default function PreorderList() {
         ))}
       </div>
 
-      <div className="flex justify-between items-center mt-4 pt-4 border-t border-zinc-700">
-        <span className="text-zinc-400 text-sm">Total</span>
-        <span className="text-yellow-400 font-semibold">฿{total.toFixed(2)}</span>
-      </div>
+      <PreorderSummary />
     </div>
   )
 }
