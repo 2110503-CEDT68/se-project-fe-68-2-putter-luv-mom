@@ -71,3 +71,23 @@ describe('preorderSlice', () => {
     expect(total).toBe(320) // 120*2 + 80*1
   })
 })
+
+describe('preorderSlice — extended actions', () => {
+  const empty = { items: [] }
+  const item1 = { id: 'a', name: 'X', price: 100, category: 'C', venueId: 'v1' }
+  const item2 = { id: 'b', name: 'Y', price: 50, category: 'C', venueId: 'v2' }
+
+  it('removeAllByVenue removes only items from that venue', () => {
+    let state = preorderReducer(empty, addToPreorder(item1))
+    state = preorderReducer(state, addToPreorder(item2))
+    state = preorderReducer(state, { type: 'preorder/removeAllByVenue', payload: 'v1' })
+    expect(state.items).toHaveLength(1)
+    expect(state.items[0].id).toBe('b')
+  })
+
+  it('setQuantityBounded clamps quantity between min and max', () => {
+    let state = preorderReducer(empty, addToPreorder(item1))
+    state = preorderReducer(state, { type: 'preorder/setQuantityBounded', payload: { id: 'a', quantity: 200, max: 99 } })
+    expect(state.items[0].quantity).toBe(99)
+  })
+})
