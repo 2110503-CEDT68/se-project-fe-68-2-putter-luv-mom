@@ -3,6 +3,8 @@
 import { MenuItem } from '@/libs/getMenus'
 import MenuCard from '@/components/MenuCard'
 import PreorderList from '@/components/PreorderList'
+import { usePreorder } from '@/hooks/usePreorder'
+import Link from 'next/link'
 import { useState } from 'react'
 
 interface MenuGalleryClientProps {
@@ -11,6 +13,7 @@ interface MenuGalleryClientProps {
 
 export default function MenuGalleryClient({ initialMenus }: MenuGalleryClientProps) {
   const [categoryFilter, setCategoryFilter] = useState('')
+  const { itemCount } = usePreorder()
 
   const categories = Array.from(new Set(initialMenus.map((m) => m.category))).sort()
 
@@ -24,7 +27,17 @@ export default function MenuGalleryClient({ initialMenus }: MenuGalleryClientPro
         {/* Menu gallery */}
         <div className="flex-1">
           <div className="mb-8">
-            <h1 className="text-2xl text-yellow-500 font-normal">Menu</h1>
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl text-yellow-500 font-normal">Menu</h1>
+              {itemCount > 0 && (
+                <Link
+                  href="/menu/preorder"
+                  className="px-3 py-1 text-xs bg-yellow-500 text-black rounded font-medium hover:bg-yellow-400 transition"
+                >
+                  View Pre-order ({itemCount})
+                </Link>
+              )}
+            </div>
             <p className="text-zinc-500 text-xs tracking-widest uppercase mt-1">
               Browse and add items to your pre-order
             </p>
