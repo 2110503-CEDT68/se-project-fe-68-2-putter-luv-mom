@@ -3,9 +3,11 @@
 import Link from 'next/link'
 import PreorderList from '@/components/PreorderList'
 import { usePreorder } from '@/hooks/usePreorder'
+import { usePreorderPersist } from '@/hooks/usePreorderPersist'
 
 export default function PreorderPage() {
   const { items, total } = usePreorder()
+  usePreorderPersist()
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-12">
