@@ -9,9 +9,10 @@ import { useState } from 'react'
 
 interface MenuGalleryClientProps {
   initialMenus: MenuItem[]
+  venueName?: string
 }
 
-export default function MenuGalleryClient({ initialMenus }: MenuGalleryClientProps) {
+export default function MenuGalleryClient({ initialMenus, venueName }: MenuGalleryClientProps) {
   const [categoryFilter, setCategoryFilter] = useState('')
   const { itemCount } = usePreorder()
 
@@ -27,8 +28,13 @@ export default function MenuGalleryClient({ initialMenus }: MenuGalleryClientPro
         {/* Menu gallery */}
         <div className="flex-1">
           <div className="mb-8">
+            <Link href="/menu" className="text-zinc-500 text-xs hover:text-yellow-400 transition mb-2 inline-block">
+              ← All Restaurants
+            </Link>
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl text-yellow-500 font-normal">Menu</h1>
+              <h1 className="text-2xl text-yellow-500 font-normal">
+                {venueName ? venueName : 'Menu'}
+              </h1>
               {itemCount > 0 && (
                 <Link
                   href="/menu/preorder"

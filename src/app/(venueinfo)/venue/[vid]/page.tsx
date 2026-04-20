@@ -80,15 +80,26 @@ export default async function VenueDetailPage({ params }: { params: Promise<{ vi
                             </div>
                         </div>
 
-                        <Link
-                            href={`/booking?vid=${vid}&venue=${encodeURIComponent(v.name)}`}
-                            className="mt-8 w-fit text-xs font-medium px-6 py-2
-                                       text-yellow-500 border border-yellow-500
-                                       hover:bg-yellow-500 hover:text-black
-                                       transition-all duration-200 tracking-widest uppercase"
-                        >
-                            Book Now
-                        </Link>
+                        <div className="mt-8 flex gap-3">
+                            <Link
+                                href={`/menu?venueId=${vid}&venueName=${encodeURIComponent(v.name)}`}
+                                className="text-xs font-medium px-6 py-2
+                                           text-black bg-yellow-500
+                                           hover:bg-yellow-400
+                                           transition-all duration-200 tracking-widest uppercase"
+                            >
+                                View Menu
+                            </Link>
+                            <Link
+                                href={`/booking?vid=${vid}&venue=${encodeURIComponent(v.name)}`}
+                                className="text-xs font-medium px-6 py-2
+                                           text-yellow-500 border border-yellow-500
+                                           hover:bg-yellow-500 hover:text-black
+                                           transition-all duration-200 tracking-widest uppercase"
+                            >
+                                Book Now
+                            </Link>
+                        </div>
                     </div>
                 </div>
 

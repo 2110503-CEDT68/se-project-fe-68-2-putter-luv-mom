@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import AuthButton from './AuthButton';
-import { AudioWaveform, UtensilsCrossed, CalendarPlus, CalendarCheck } from 'lucide-react';
+import { AudioWaveform, UtensilsCrossed, CalendarPlus, CalendarCheck, BookOpen } from 'lucide-react';
 
 export default function TopMenu() {
     return (
@@ -47,6 +47,22 @@ export default function TopMenu() {
                                          whitespace-nowrap transition-all duration-300
                                          text-xs font-medium group-hover:ml-2">
                             New Reservation
+                        </span>
+                    </Link>
+
+                    {/* Menu */}
+                    <Link
+                        href="/menu"
+                        className="group flex items-center gap-0 overflow-hidden
+                                   p-2 text-yellow-500 border border-yellow-500/50
+                                   hover:bg-yellow-500 hover:text-black
+                                   transition-all duration-300"
+                    >
+                        <BookOpen size={16} />
+                        <span className="max-w-0 group-hover:max-w-[80px] overflow-hidden
+                                         whitespace-nowrap transition-all duration-300
+                                         text-xs font-medium group-hover:ml-2">
+                            Menu
                         </span>
                     </Link>
 

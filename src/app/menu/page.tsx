@@ -1,20 +1,27 @@
 import { getMenusByVenue } from '@/libs/getMenus'
+import getVenues from '@/libs/getVenues'
 import MenuGalleryClient from './MenuGalleryClient'
+import VenueMenuPicker from './VenueMenuPicker'
 
-// Default venue — can be parameterised via searchParams later
-const DEFAULT_VENUE_ID = process.env.NEXT_PUBLIC_DEFAULT_VENUE_ID || ''
+interface MenuPageProps {
+  searchParams: Promise<{ venueId?: string; venueName?: string }>
+}
 
-export default async function MenuPage() {
+export default async function MenuPage({ searchParams }: MenuPageProps) {
+  const { venueId, venueName } = await searchParams
+
+  if (!venueId) {
+    const venuesJson = await getVenues().catch(() => ({ data: [] }))
+    return <VenueMenuPicker venues={venuesJson.data} />
+  }
+
   let initialMenus: Awaited<ReturnType<typeof getMenusByVenue>>['data'] = []
-
   try {
-    if (DEFAULT_VENUE_ID) {
-      const json = await getMenusByVenue(DEFAULT_VENUE_ID)
-      initialMenus = json.data
-    }
+    const json = await getMenusByVenue(venueId)
+    initialMenus = json.data
   } catch {
     // Server-side fetch failure — client will show empty state
   }
 
-  return <MenuGalleryClient initialMenus={initialMenus} />
+  return <MenuGalleryClient initialMenus={initialMenus} venueName={venueName} />
 }
