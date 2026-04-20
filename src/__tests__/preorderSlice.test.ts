@@ -6,7 +6,7 @@ import preorderReducer, {
 } from '../redux/features/preorderSlice'
 
 const mockItem = {
-  id: 'item-1',
+  _id: 'item-1',
   name: 'Pad Thai',
   price: 120,
   category: 'Main',
@@ -36,12 +36,12 @@ describe('preorderSlice', () => {
   })
 
   it('does not remove other items when removing one', () => {
-    const item2 = { ...mockItem, id: 'item-2', name: 'Tom Yum' }
+    const item2 = { ...mockItem, _id: 'item-2', name: 'Tom Yum' }
     let state = preorderReducer(empty, addToPreorder(mockItem))
     state = preorderReducer(state, addToPreorder(item2))
     state = preorderReducer(state, removeFromPreorder('item-1'))
     expect(state.items).toHaveLength(1)
-    expect(state.items[0].id).toBe('item-2')
+    expect(state.items[0]._id).toBe('item-2')
   })
 
   it('updates quantity of existing item', () => {
@@ -58,14 +58,14 @@ describe('preorderSlice', () => {
 
   it('clears all items', () => {
     let state = preorderReducer(empty, addToPreorder(mockItem))
-    state = preorderReducer(state, addToPreorder({ ...mockItem, id: 'item-2', name: 'Tom Yum' }))
+    state = preorderReducer(state, addToPreorder({ ...mockItem, _id: 'item-2', name: 'Tom Yum' }))
     state = preorderReducer(state, clearPreorder())
     expect(state.items).toHaveLength(0)
   })
 
   it('correctly calculates total for multiple items', () => {
     let state = preorderReducer(empty, addToPreorder(mockItem))
-    state = preorderReducer(state, addToPreorder({ ...mockItem, id: 'item-2', name: 'Tom Yum', price: 80 }))
+    state = preorderReducer(state, addToPreorder({ ...mockItem, _id: 'item-2', name: 'Tom Yum', price: 80 }))
     state = preorderReducer(state, updateQuantity({ id: 'item-1', quantity: 2 }))
     const total = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
     expect(total).toBe(320) // 120*2 + 80*1
@@ -74,15 +74,15 @@ describe('preorderSlice', () => {
 
 describe('preorderSlice — extended actions', () => {
   const empty = { items: [] }
-  const item1 = { id: 'a', name: 'X', price: 100, category: 'C', venueId: 'v1' }
-  const item2 = { id: 'b', name: 'Y', price: 50, category: 'C', venueId: 'v2' }
+  const item1 = { _id: 'a', name: 'X', price: 100, category: 'C', venueId: 'v1' }
+  const item2 = { _id: 'b', name: 'Y', price: 50, category: 'C', venueId: 'v2' }
 
   it('removeAllByVenue removes only items from that venue', () => {
     let state = preorderReducer(empty, addToPreorder(item1))
     state = preorderReducer(state, addToPreorder(item2))
     state = preorderReducer(state, { type: 'preorder/removeAllByVenue', payload: 'v1' })
     expect(state.items).toHaveLength(1)
-    expect(state.items[0].id).toBe('b')
+    expect(state.items[0]._id).toBe('b')
   })
 
   it('setQuantityBounded clamps quantity between min and max', () => {
@@ -94,7 +94,7 @@ describe('preorderSlice — extended actions', () => {
 
 describe('preorderSlice — quantity bounds', () => {
   const empty = { items: [] }
-  const item = { id: 'x', name: 'Test', price: 50, category: 'C', venueId: 'v1' }
+  const item = { _id: 'x', name: 'Test', price: 50, category: 'C', venueId: 'v1' }
 
   it('updateQuantity enforces minimum of 1 (boundary test)', () => {
     let state = preorderReducer(empty, addToPreorder(item))

@@ -9,8 +9,8 @@ import {
 const mockState = {
   preorder: {
     items: [
-      { id: 'a', name: 'Pad Thai', price: 120, category: 'Main', venueId: 'v1', quantity: 2 },
-      { id: 'b', name: 'Tom Yum', price: 80, category: 'Soup', venueId: 'v1', quantity: 1 },
+      { _id: 'a', name: 'Pad Thai', price: 120, category: 'Main', venueId: 'v1', quantity: 2 },
+      { _id: 'b', name: 'Tom Yum', price: 80, category: 'Soup', venueId: 'v1', quantity: 1 },
     ],
   },
 } as any

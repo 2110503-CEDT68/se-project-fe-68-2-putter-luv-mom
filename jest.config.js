@@ -13,6 +13,7 @@ const config = {
   preset: 'ts-jest',
   verbose: true,
   testTimeout: 30000,
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/'],
   globals: {
     fetch: global.fetch,
   }
