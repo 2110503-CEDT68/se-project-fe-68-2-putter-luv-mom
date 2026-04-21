@@ -46,4 +46,14 @@ describe('RestaurantDetail', () => {
     render(<RestaurantDetail restaurant={{ ...mockRestaurant, picture: 'https://example.com/img.jpg' }} />)
     expect(screen.getByRole('img')).toBeInTheDocument()
   })
+
+  it('renders tel number', () => {
+    render(<RestaurantDetail restaurant={mockRestaurant} />)
+    expect(screen.getByText(/02-000-0000/)).toBeInTheDocument()
+  })
+
+  it('renders daily rate when provided', () => {
+    render(<RestaurantDetail restaurant={{ ...mockRestaurant, dailyrate: 500 }} />)
+    expect(screen.getByText(/500\.00/)).toBeInTheDocument()
+  })
 })
