@@ -1,6 +1,8 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 export default async function getAllReviews(token: string) {
     const response = await fetch(
-        "https://project-bn-sorawat.vercel.app/api/v1/reviews",
+        `${API_URL}/api/v1/reviews`,
         {
             method: "GET",
             headers: {

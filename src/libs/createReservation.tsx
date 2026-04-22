@@ -1,10 +1,12 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+
 export default async function createReservation(
     restaurantId: string,
     reservationDate: string,
     token: string
 ) {
     const response = await fetch(
-        `https://project-bn-sorawat.vercel.app/api/v1/restaurants/${restaurantId}/reservations`,
+        `${API_URL}/api/v1/restaurants/${restaurantId}/reservations`,
         {
             method: "POST",
             headers: {
