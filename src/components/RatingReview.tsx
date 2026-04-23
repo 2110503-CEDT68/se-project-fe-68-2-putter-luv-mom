@@ -375,36 +375,62 @@ export default function RatingReview({ venueId, token, userId, initialReviews }:
             {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
 
             <div className="mt-8 flex flex-col gap-4">
+                {reviews.length === 0 && (
+                    <p className="text-gray-600 text-sm text-center py-6">
+                        No reviews yet. Be the first to share your experience!
+                    </p>
+                )}
                 {reviews.map((review) => {
                     const userName =
                         typeof review.user === "string"
                             ? "User"
                             : review.user?.name || review.user?.email || "User"
+                    const initials = userName.slice(0, 2).toUpperCase()
+                    const formattedDate = review.createdAt
+                        ? new Date(review.createdAt).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                          })
+                        : ""
 
                     return (
                         <div
                             key={review._id}
-                            className="border border-yellow-600/10 bg-[#111] p-4"
+                            className="border border-yellow-600/10 bg-[#111] p-4 flex gap-3"
                         >
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm text-gray-300">{userName}</span>
-                                <div className="flex gap-0.5">
-                                    {[1, 2, 3, 4, 5].map((s) => (
-                                        <span
-                                            key={s}
-                                            className={`text-lg ${
-                                                review.rating >= s ? "text-yellow-400" : "text-gray-700"
-                                            }`}
-                                        >
-                                            ★
-                                        </span>
-                                    ))}
-                                </div>
+                            <div className="w-9 h-9 rounded-full bg-yellow-600/20 flex items-center justify-center shrink-0">
+                                <span className="text-yellow-500 text-xs font-semibold">{initials}</span>
                             </div>
 
-                            <p className="text-sm text-gray-400 whitespace-pre-line">
-                                {review.description?.trim() || "No description"}
-                            </p>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <span className="text-sm text-gray-300 font-medium">{userName}</span>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex gap-0.5">
+                                            {[1, 2, 3, 4, 5].map((s) => (
+                                                <span
+                                                    key={s}
+                                                    className={`text-base ${
+                                                        review.rating >= s ? "text-yellow-400" : "text-gray-700"
+                                                    }`}
+                                                >
+                                                    ★
+                                                </span>
+                                            ))}
+                                        </div>
+                                        {formattedDate && (
+                                            <span className="text-gray-600 text-xs">{formattedDate}</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <p className="text-sm text-gray-400 whitespace-pre-line leading-relaxed">
+                                    {review.description?.trim() || (
+                                        <span className="italic text-gray-600">No description</span>
+                                    )}
+                                </p>
+                            </div>
                         </div>
                     )
                 })}
