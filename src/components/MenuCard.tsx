@@ -33,7 +33,7 @@ export default function MenuCard({ menu }: MenuCardProps) {
             )}
             <AddToPreorderButton
               item={{
-                id: menu._id,
+                _id: menu._id,
                 name: menu.name,
                 price: menu.price,
                 category: menu.category,

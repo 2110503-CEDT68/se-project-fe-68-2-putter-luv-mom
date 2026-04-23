@@ -22,7 +22,7 @@ export const authOptions: AuthOptions = {
                     const userResponse = await userLogIn(credentials.email, credentials.password)
                     if (userResponse && userResponse.token) {
                         return {
-                            id: userResponse._id,
+                            id: userResponse.id,
                             name: userResponse.name,
                             email: userResponse.email,
                             token: userResponse.token,

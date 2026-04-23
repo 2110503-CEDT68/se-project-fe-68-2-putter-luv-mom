@@ -23,5 +23,5 @@ export default async function MenuPage({ searchParams }: MenuPageProps) {
     // Server-side fetch failure — client will show empty state
   }
 
-  return <MenuGalleryClient initialMenus={initialMenus} venueName={venueName} />
+  return <MenuGalleryClient initialMenus={initialMenus} venueName={venueName} venueId={venueId} />
 }
