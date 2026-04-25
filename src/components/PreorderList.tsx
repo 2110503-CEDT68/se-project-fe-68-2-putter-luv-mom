@@ -34,7 +34,7 @@ export default function PreorderList() {
       <div className="space-y-3">
         {items.map((item) => (
           <PreorderItemRow
-            key={item._id}
+            key={item._id ?? `${item.venueId}-${item.name}`}
             item={item}
             onQuantityChange={setQuantity}
             onRemove={remove}
