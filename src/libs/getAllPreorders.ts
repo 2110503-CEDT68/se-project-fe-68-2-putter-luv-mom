@@ -42,11 +42,14 @@ export async function removePreorderItem(venueId: string, menuId: string): Promi
 
 export async function confirmPreorder(
   venueId: string,
-  items: { menuId: string; name: string; price: number; quantity: number }[]
+  items: { menuId: string; name: string; price: number; quantity: number }[],
+  token?: string
 ): Promise<void> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
   const res = await fetch(`${API_URL}/api/v1/preorders/${venueId}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ items }),
   })
   if (!res.ok) throw new Error('Failed to confirm preorder')

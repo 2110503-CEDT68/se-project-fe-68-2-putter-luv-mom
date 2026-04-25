@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, Loader2, ShoppingBag, ArrowRight } from 'lucide-react'
@@ -10,6 +11,8 @@ import { usePreorderPersist } from '@/hooks/usePreorderPersist'
 import { confirmPreorder } from '@/libs/getAllPreorders'
 
 export default function PreorderPage() {
+  const { data: session } = useSession()
+  const token = (session?.user as any)?.token as string | undefined
   const { items, total, clear } = usePreorder()
   const router = useRouter()
   usePreorderPersist()
@@ -34,7 +37,8 @@ export default function PreorderPage() {
         Object.entries(byVenue).map(([venueId, venueItems]) =>
           confirmPreorder(
             venueId,
-            venueItems.map((i) => ({ menuId: i._id, name: i.name, price: i.price, quantity: i.quantity }))
+            venueItems.map((i) => ({ menuId: i._id, name: i.name, price: i.price, quantity: i.quantity })),
+            token
           )
         )
       )

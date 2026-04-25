@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import {
   Store, ChevronDown, ChevronRight, Pencil, Trash2,
@@ -14,6 +15,8 @@ import { PreorderItem } from '@/redux/features/preorderSlice'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
 
 export default function MyOrdersPage() {
+  const { data: session } = useSession()
+  const token = (session?.user as any)?.token as string | undefined
   const { items, setQuantity, removeByVenue, remove, clear } = usePreorder()
 
   const [venueNames, setVenueNames] = useState<Record<string, string>>({})
@@ -95,7 +98,8 @@ export default function MyOrdersPage() {
       // 1. Save updated list to backend
       await confirmPreorder(
         editVenueId,
-        editItems.map((i) => ({ menuId: i._id, name: i.name, price: i.price, quantity: i.quantity }))
+        editItems.map((i) => ({ menuId: i._id, name: i.name, price: i.price, quantity: i.quantity })),
+        token
       )
       // 2. Sync Redux: remove items that were deleted, update quantities
       const keepIds = new Set(editItems.map((i) => i._id))

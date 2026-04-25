@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import { MenuItem } from '@/libs/getMenus'
 import MenuCard from '@/components/MenuCard'
 import PreorderList from '@/components/PreorderList'
@@ -16,6 +17,8 @@ interface MenuGalleryClientProps {
 }
 
 export default function MenuGalleryClient({ initialMenus, venueName, venueId }: MenuGalleryClientProps) {
+  const { data: session } = useSession()
+  const token = (session?.user as any)?.token as string | undefined
   const [categoryFilter, setCategoryFilter] = useState('')
   const { items, itemCount, removeByVenue } = usePreorder()
 
@@ -37,7 +40,8 @@ export default function MenuGalleryClient({ initialMenus, venueName, venueId }: 
     try {
       await confirmPreorder(
         venueId,
-        venueItems.map((i) => ({ menuId: i._id, name: i.name, price: i.price, quantity: i.quantity }))
+        venueItems.map((i) => ({ menuId: i._id, name: i.name, price: i.price, quantity: i.quantity })),
+        token
       )
       setConfirmed(true)
     } catch (e: any) {
