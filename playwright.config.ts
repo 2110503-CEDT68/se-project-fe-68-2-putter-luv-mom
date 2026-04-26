@@ -5,6 +5,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: 1,
   timeout: 30000,
+  reporter: [['html', { open: 'never', host: '0.0.0.0', port: 9323 }]],
 
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',

@@ -11,13 +11,31 @@ services:
       - app-network
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.46.0-jammy
+    build:
+      context: .
+      dockerfile: Dockerfile.playwright
     working_dir: /app
     volumes:
       - ./:/app
     depends_on:
       - frontend
-    command: npx playwright test
+    environment:
+      - PLAYWRIGHT_BASE_URL=http://frontend:3000
+    ports:
+      - "9323:9323"
+    networks:
+      - app-network
+
+  jest:
+    build:
+      context: .
+      dockerfile: Dockerfile.jest
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - CI=true
     networks:
       - app-network
 
