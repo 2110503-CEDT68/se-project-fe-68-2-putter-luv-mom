@@ -13,7 +13,10 @@ const config = {
   preset: 'ts-jest',
   verbose: true,
   testTimeout: 30000,
-  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/'],
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/tests/', '<rootDir>/src/e2e/'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
   globals: {
     fetch: global.fetch,
   }
