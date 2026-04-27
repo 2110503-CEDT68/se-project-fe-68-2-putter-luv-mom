@@ -12,7 +12,9 @@ import QuantityEditor from '@/components/QuantityEditor'
 import { confirmPreorder, removePreorderItem } from '@/libs/getAllPreorders'
 import { PreorderItem } from '@/redux/features/preorderSlice'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = typeof window !== 'undefined'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '')
 
 export default function MyOrdersPage() {
   const { data: session } = useSession()

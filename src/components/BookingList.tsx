@@ -2,7 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { Calendar, Trash2, Pencil, Check, X, Hash } from "lucide-react";
+import { Calendar, Trash2, Pencil, Check, X, Hash, Store, ShoppingBag } from "lucide-react";
+import Link from "next/link";
 import dayjs, { Dayjs } from "dayjs";
 import DateReserve from "@/components/DateReserve";
 import getReservations from "@/libs/getReservations";
@@ -16,8 +17,20 @@ export default function BookingList() {
     const [editingId, setEditingId] = useState<string | null>(null)
     const [editDate, setEditDate] = useState<Dayjs | null>(null)
     const [editTime, setEditTime] = useState("18:00")
+    const [restaurantNames, setRestaurantNames] = useState<Record<string, string>>({})
 
     const token = (session?.user as any)?.token
+
+    useEffect(() => {
+        fetch('/api/v1/restaurants')
+            .then(r => r.json())
+            .then(j => {
+                const map: Record<string, string> = {}
+                for (const r of j.data ?? []) map[r._id] = r.name
+                setRestaurantNames(map)
+            })
+            .catch(() => {})
+    }, [])
 
     const fetchBookings = async () => {
         try {
@@ -74,9 +87,21 @@ export default function BookingList() {
                 <div key={item._id} className="bg-[#111] border border-yellow-600/20 p-6">
                     {editingId === item._id ? (
                         <div className="flex flex-col gap-4">
-                            <h3 className="text-yellow-500 text-sm tracking-widest uppercase">
-                                Editing Reservation
-                            </h3>
+                            <div>
+                                <h3 className="text-yellow-500 text-sm tracking-widest uppercase">
+                                    Editing Reservation
+                                </h3>
+                                {(() => {
+                                    const rid = item.restaurantId || item.restaurant?._id || item.restaurant || item.venue
+                                    const rname = restaurantNames[rid] || item.restaurant?.name || rid
+                                    return rname ? (
+                                        <p className="flex items-center gap-1.5 text-gray-400 text-xs mt-1">
+                                            <Store size={11} className="text-yellow-600/50" />
+                                            {rname}
+                                        </p>
+                                    ) : null
+                                })()}
+                            </div>
                             <div className="flex flex-col gap-1">
                                 <label className="text-gray-500 text-xs tracking-widest uppercase">New Date</label>
                                 <div className="bg-[#1a1a1a] border border-gray-700 p-3">
@@ -111,16 +136,22 @@ export default function BookingList() {
                         <div className="flex justify-between items-center">
                             <div className="flex flex-col gap-2">
                                 {/* ชื่อร้าน */}
-                                <h3 className="text-yellow-500 text-lg">
-                                    {item.restaurant?.name || item.restaurant}
-                                </h3>
+                                {(() => {
+                                    const rid = item.restaurantId || item.restaurant?._id || item.restaurant || item.venue
+                                    const rname = restaurantNames[rid] || item.restaurant?.name || rid
+                                    return (
+                                        <h3 className="text-yellow-500 text-lg flex items-center gap-2">
+                                            <Store size={14} className="text-yellow-600/50 shrink-0" />
+                                            {rname || <span className="text-gray-600 text-sm">Unknown restaurant</span>}
+                                        </h3>
+                                    )
+                                })()}
 
                                 {/* วันเวลา */}
                                 <div className="flex items-center gap-2 text-gray-400 text-xs">
                                     <Calendar size={12} className="text-yellow-600/60" />
                                     {dayjs(item.reservationDate).format("DD MMM YYYY HH:mm")}
                                 </div>
-
 
                                 {/* Booking ID */}
                                 <div className="flex items-center gap-2 text-gray-600 text-xs font-mono">
@@ -133,6 +164,20 @@ export default function BookingList() {
                                 <span className="text-yellow-600/60 text-xs tracking-widest uppercase border border-yellow-600/20 px-3 py-1">
                                     Upcoming
                                 </span>
+                                {/* Order button */}
+                                {(() => {
+                                    const rid = item.restaurantId || item.restaurant?._id || item.restaurant || item.venue
+                                    const rname = restaurantNames[rid] || item.restaurant?.name || ''
+                                    return rid ? (
+                                        <Link
+                                            href={`/menu?venueId=${rid}&venueName=${encodeURIComponent(rname)}`}
+                                            className="flex items-center gap-1.5 p-2 border border-yellow-600/30 text-yellow-600/60 hover:border-yellow-500 hover:text-yellow-500 transition"
+                                            title="Order food"
+                                        >
+                                            <ShoppingBag size={14} />
+                                        </Link>
+                                    ) : null
+                                })()}
                                 <button
                                     onClick={() => {
                                         setEditingId(item._id)

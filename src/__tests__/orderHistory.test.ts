@@ -95,3 +95,143 @@ describe('Order History — Empty state', () => {
     expect([{ _id: '1' }].length === 0).toBe(false)
   })
 })
+
+// ── Search helpers (mirrors the logic in order-history/page.tsx) ────────────
+
+function filterOrders(
+  orders: { _id: string; venueId: string; items: { name: string }[] }[],
+  venueNames: Record<string, string>,
+  query: string
+) {
+  const q = query.trim().toLowerCase()
+  if (!q) return orders
+  return orders.filter(order => {
+    const venue = (venueNames[order.venueId] || order.venueId).toLowerCase()
+    const hasItem = order.items.some(i => i.name.toLowerCase().includes(q))
+    return venue.includes(q) || hasItem
+  })
+}
+
+const VENUE_NAMES: Record<string, string> = {
+  'venue-1': 'The Grand Palace Dining',
+  'venue-2': 'Sushiro Premium Zen',
+  'venue-3': 'Pony Sweet Cafe',
+}
+
+const SAMPLE_ORDERS = [
+  {
+    _id: 'order-1',
+    venueId: 'venue-1',
+    items: [{ name: 'Grilled Salmon' }, { name: 'Caesar Salad' }],
+  },
+  {
+    _id: 'order-2',
+    venueId: 'venue-2',
+    items: [{ name: 'Salmon Sashimi' }, { name: 'Miso Soup' }],
+  },
+  {
+    _id: 'order-3',
+    venueId: 'venue-3',
+    items: [{ name: 'Matcha Latte' }, { name: 'Croissant' }],
+  },
+]
+
+describe('Order History — Search by restaurant name', () => {
+  it('returns all orders when query is empty', () => {
+    expect(filterOrders(SAMPLE_ORDERS, VENUE_NAMES, '')).toHaveLength(3)
+  })
+
+  it('returns all orders when query is only whitespace', () => {
+    expect(filterOrders(SAMPLE_ORDERS, VENUE_NAMES, '   ')).toHaveLength(3)
+  })
+
+  it('matches exact restaurant name (case-insensitive)', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'grand palace')
+    expect(result).toHaveLength(1)
+    expect(result[0]._id).toBe('order-1')
+  })
+
+  it('matches partial restaurant name', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'pony')
+    expect(result).toHaveLength(1)
+    expect(result[0]._id).toBe('order-3')
+  })
+
+  it('is case-insensitive for restaurant name', () => {
+    const lower = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'sushiro')
+    const upper = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'SUSHIRO')
+    expect(lower).toHaveLength(1)
+    expect(upper).toHaveLength(1)
+    expect(lower[0]._id).toBe(upper[0]._id)
+  })
+
+  it('returns empty array when no restaurant matches', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'nonexistent restaurant')
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('Order History — Search by item name', () => {
+  it('matches a single item name', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'miso soup')
+    expect(result).toHaveLength(1)
+    expect(result[0]._id).toBe('order-2')
+  })
+
+  it('matches partial item name', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'croiss')
+    expect(result).toHaveLength(1)
+    expect(result[0]._id).toBe('order-3')
+  })
+
+  it('is case-insensitive for item name', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'MATCHA')
+    expect(result).toHaveLength(1)
+    expect(result[0]._id).toBe('order-3')
+  })
+
+  it('matches across multiple orders when item name appears in each', () => {
+    // "salmon" appears in both order-1 (Grilled Salmon) and order-2 (Salmon Sashimi)
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'salmon')
+    expect(result).toHaveLength(2)
+    const ids = result.map(r => r._id)
+    expect(ids).toContain('order-1')
+    expect(ids).toContain('order-2')
+  })
+
+  it('returns empty array when no item matches', () => {
+    const result = filterOrders(SAMPLE_ORDERS, VENUE_NAMES, 'pizza')
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('Order History — Search with pagination', () => {
+  it('resets to page 1 when fewer results than current page', () => {
+    // Simulates page 2 becoming invalid after filtering down to 1 result
+    const fullOrders = Array.from({ length: 15 }, (_, i) => ({
+      _id: String(i + 1),
+      venueId: i === 0 ? 'venue-1' : 'venue-x',
+      items: [],
+    }))
+    const venueMap = { 'venue-1': 'Grand Palace', 'venue-x': 'Other' }
+    const filtered = filterOrders(fullOrders, venueMap, 'grand')
+    expect(filtered).toHaveLength(1)
+    // After filtering, page 1 is the only valid page
+    expect(Math.ceil(filtered.length / 10)).toBe(1)
+  })
+
+  it('paginates filtered results correctly', () => {
+    // 12 orders all matching "other venue", expect 2 pages
+    const orders = Array.from({ length: 12 }, (_, i) => ({
+      _id: String(i + 1),
+      venueId: 'venue-x',
+      items: [],
+    }))
+    const venueMap = { 'venue-x': 'Other Venue' }
+    const filtered = filterOrders(orders, venueMap, 'other')
+    expect(filtered).toHaveLength(12)
+    expect(totalPages(filtered.length)).toBe(2)
+    expect(paginate(filtered, 1)).toHaveLength(10)
+    expect(paginate(filtered, 2)).toHaveLength(2)
+  })
+})

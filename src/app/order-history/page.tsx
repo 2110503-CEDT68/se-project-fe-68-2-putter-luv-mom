@@ -5,12 +5,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ShoppingBag, ChevronDown, ChevronRight,
-  RefreshCw, Store, Loader2, CalendarDays, Receipt,
+  ChevronDown, ChevronRight,
+  RefreshCw, Store, Loader2, CalendarDays, Receipt, Search, X,
 } from 'lucide-react'
 import { usePreorder } from '@/hooks/usePreorder'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'
+const API_URL = typeof window !== 'undefined'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '')
 const PER_PAGE = 10
 
 interface OrderItem {
@@ -39,6 +41,7 @@ export default function OrderHistoryPage() {
   const [expanded,   setExpanded]   = useState<Set<string>>(new Set())
   const [page,       setPage]       = useState(1)
   const [toast,      setToast]      = useState('')
+  const [search,     setSearch]     = useState('')
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/signin')
@@ -128,8 +131,17 @@ export default function OrderHistoryPage() {
     )
   }
 
-  const totalPages = Math.ceil(orders.length / PER_PAGE)
-  const paginated  = orders.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+  const q = search.trim().toLowerCase()
+  const filtered = q
+    ? orders.filter(order => {
+        const venue = (venueNames[order.venueId] || order.venueId).toLowerCase()
+        const hasItem = order.items.some(i => i.name.toLowerCase().includes(q))
+        return venue.includes(q) || hasItem
+      })
+    : orders
+
+  const totalPages = Math.ceil(filtered.length / PER_PAGE)
+  const paginated  = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-12">
@@ -148,9 +160,48 @@ export default function OrderHistoryPage() {
           </Link>
           <h1 className="text-2xl text-yellow-500 font-normal mt-3">Order History</h1>
           <p className="text-zinc-500 text-xs tracking-widest uppercase mt-1">
-            {orders.length} order{orders.length !== 1 ? 's' : ''} total
+            {q
+              ? `${filtered.length} result${filtered.length !== 1 ? 's' : ''} for "${search}"`
+              : `${orders.length} order${orders.length !== 1 ? 's' : ''} total`
+            }
           </p>
         </div>
+
+        {/* Search bar */}
+        <div className="relative mb-6">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            placeholder="Search by restaurant or item name..."
+            className="w-full bg-[#111] border border-zinc-800 text-white text-sm
+                       pl-9 pr-9 py-2.5 outline-none focus:border-yellow-500 transition
+                       placeholder:text-zinc-600"
+          />
+          {search && (
+            <button
+              onClick={() => { setSearch(''); setPage(1) }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {/* No results */}
+        {q && filtered.length === 0 && (
+          <div className="flex flex-col items-center gap-3 py-16 text-center">
+            <Search size={32} className="text-zinc-700" />
+            <p className="text-zinc-500 text-sm">No orders match <span className="text-zinc-300">"{search}"</span></p>
+            <button
+              onClick={() => { setSearch(''); setPage(1) }}
+              className="text-yellow-500 text-xs hover:underline"
+            >
+              Clear search
+            </button>
+          </div>
+        )}
 
         {/* Order list */}
         <div className="flex flex-col gap-4">

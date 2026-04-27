@@ -5,7 +5,6 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import getVenues from '@/libs/getVenues';
 import getReservations from '@/libs/getReservations';
 import createReservation from '@/libs/createReservation';
 import Toast from '@/components/Toast';
@@ -17,13 +16,12 @@ const RANKING_LIMIT: Record<string, number> = {
     gold: 3,
 }
 
-export default function BookingClient() {
+export default function BookingClient({ restaurants }: { restaurants: any[] }) {
     const { data: session } = useSession()
     const router = useRouter()
     const searchParams = useSearchParams()
     const { toast, showToast, hideToast } = useToast()
 
-    const [restaurants, setRestaurants] = useState<any[]>([])
     const [restaurantId, setRestaurantId] = useState(searchParams.get('vid') ?? "")
     const [restaurantName, setRestaurantName] = useState(searchParams.get('venue') ?? "")
     const [bookDate, setBookDate] = useState<Dayjs | null>(null)
@@ -36,8 +34,11 @@ export default function BookingClient() {
     const limit = role === "admin" ? Infinity : (RANKING_LIMIT[ranking] ?? 1)
 
     useEffect(() => {
-        getVenues().then((data) => setRestaurants(data.data))
-    }, [])
+        if (restaurantId && restaurants.length > 0 && !restaurantName) {
+            const found = restaurants.find((r) => r._id === restaurantId)
+            if (found) setRestaurantName(found.name)
+        }
+    }, [restaurants, restaurantId])
 
     const handleBooking = async () => {
         if (!restaurantId || !bookDate) {
