@@ -9,24 +9,6 @@ services:
       - .env
     networks:
       - app-network
-
-  playwright:
-    build:
-      context: .
-      dockerfile: Dockerfile.playwright
-    working_dir: /app
-    volumes:
-      - ./:/app
-      - /app/node_modules
-    depends_on:
-      - frontend
-    environment:
-      - PLAYWRIGHT_BASE_URL=http://frontend:3000
-    ports:
-      - "9323:9323"
-    networks:
-      - app-network
-
   jest:
     build:
       context: .
