@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Search, X, Star, MapPin, Phone, Clock,
-  BookOpen, SlidersHorizontal, ChevronDown,
+  BookOpen, SlidersHorizontal, ChevronDown, Navigation,
 } from 'lucide-react'
 import {
-  applyFilters, extractCategories, extractLocations, SortOption,
+  applyFilters, extractCategories, extractProvinces, extractDistricts,
+  SortOption, DistanceOption,
 } from '@/libs/searchUtils'
 import { RestaurantItem } from '@/libs/getRestaurants'
 
@@ -20,38 +21,72 @@ const SORT_OPTIONS: { label: string; value: SortOption }[] = [
 ]
 
 const RATING_OPTIONS = [
-  { label: 'Any',    value: '' },
+  { label: 'Any',      value: '' },
   { label: '4★ & up', value: '4' },
   { label: '3★ & up', value: '3' },
   { label: '2★ & up', value: '2' },
 ]
 
+const DISTANCE_OPTIONS: { label: string; value: DistanceOption }[] = [
+  { label: 'Any',    value: '' },
+  { label: '< 500m', value: '500' },
+  { label: '< 1km',  value: '1000' },
+  { label: '< 5km',  value: '5000' },
+  { label: '< 10km', value: '10000' },
+]
+
 export default function SearchClient({ initialRestaurants }: { initialRestaurants: RestaurantItem[] }) {
-  const [query,      setQuery]      = useState('')
-  const [category,   setCategory]   = useState('')
-  const [location,   setLocation]   = useState('')
-  const [minRating,  setMinRating]  = useState('')
-  const [sort,       setSort]       = useState<SortOption>('')
-  const [showFilter, setShowFilter] = useState(false)
+  const [query,       setQuery]       = useState('')
+  const [category,   setCategory]    = useState('')
+  const [province,   setProvince]    = useState('')
+  const [district,   setDistrict]    = useState('')
+  const [minRating,  setMinRating]   = useState('')
+  const [sort,       setSort]        = useState<SortOption>('')
+  const [maxDistance, setMaxDistance] = useState<DistanceOption>('')
+  const [userLat,    setUserLat]     = useState<number | undefined>()
+  const [userLng,    setUserLng]     = useState<number | undefined>()
+  const [locating,   setLocating]    = useState(false)
+  const [showFilter, setShowFilter]  = useState(false)
 
   const categories = useMemo(() => extractCategories(initialRestaurants), [initialRestaurants])
-  const locations  = useMemo(() => extractLocations(initialRestaurants),  [initialRestaurants])
-  const filtered   = useMemo(
-    () => applyFilters(initialRestaurants, { query, category, location, minRating, sort }),
-    [initialRestaurants, query, category, location, minRating, sort],
+  const provinces  = useMemo(() => extractProvinces(initialRestaurants),  [initialRestaurants])
+  const districts  = useMemo(() => extractDistricts(initialRestaurants, province || undefined), [initialRestaurants, province])
+
+  const filtered = useMemo(
+    () => applyFilters(initialRestaurants, { query, category, province, district, minRating, sort, maxDistance, userLat, userLng }),
+    [initialRestaurants, query, category, province, district, minRating, sort, maxDistance, userLat, userLng],
   )
 
-  const activeFilters: { label: string; onRemove: () => void }[] = []
-  if (query)     activeFilters.push({ label: `"${query}"`,        onRemove: () => setQuery('') })
-  if (category)  activeFilters.push({ label: category,            onRemove: () => setCategory('') })
-  if (location)  activeFilters.push({ label: `📍 ${location}`,   onRemove: () => setLocation('') })
-  if (minRating) activeFilters.push({ label: `${minRating}★+`,   onRemove: () => setMinRating('') })
-  if (sort)      activeFilters.push({ label: SORT_OPTIONS.find(s => s.value === sort)!.label, onRemove: () => setSort('') })
+  // Reset district when province changes
+  useEffect(() => { setDistrict('') }, [province])
 
-  const filterCount = [category, location, minRating].filter(Boolean).length
+  function requestLocation() {
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLat(pos.coords.latitude)
+        setUserLng(pos.coords.longitude)
+        setLocating(false)
+      },
+      () => setLocating(false)
+    )
+  }
+
+  const activeFilters: { label: string; onRemove: () => void }[] = []
+  if (query)       activeFilters.push({ label: `"${query}"`,         onRemove: () => setQuery('') })
+  if (category)    activeFilters.push({ label: category,             onRemove: () => setCategory('') })
+  if (province)    activeFilters.push({ label: `📍 ${province}`,    onRemove: () => { setProvince(''); setDistrict('') } })
+  if (district)    activeFilters.push({ label: `🏘 ${district}`,    onRemove: () => setDistrict('') })
+  if (minRating)   activeFilters.push({ label: `${minRating}★+`,    onRemove: () => setMinRating('') })
+  if (maxDistance) activeFilters.push({ label: DISTANCE_OPTIONS.find(d => d.value === maxDistance)!.label, onRemove: () => setMaxDistance('') })
+  if (sort)        activeFilters.push({ label: SORT_OPTIONS.find(s => s.value === sort)!.label, onRemove: () => setSort('') })
+
+  const filterCount = [category, province, district, minRating, maxDistance].filter(Boolean).length
 
   function clearAll() {
-    setQuery(''); setCategory(''); setLocation(''); setMinRating(''); setSort('')
+    setQuery(''); setCategory(''); setProvince(''); setDistrict('')
+    setMinRating(''); setSort(''); setMaxDistance('')
   }
 
   return (
@@ -76,28 +111,23 @@ export default function SearchClient({ initialRestaurants }: { initialRestaurant
 
         {/* ── Search bar + controls ───────────────────────────────── */}
         <div className="flex gap-3 mb-4">
-          {/* Search input */}
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-yellow-500/50" />
             <input
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Search restaurants by name or address…"
+              placeholder="Search by name, address, province…"
               className="w-full pl-10 pr-9 py-3 bg-[#0f0f0f] border border-yellow-600/20 text-white text-sm
                          placeholder-gray-600 focus:outline-none focus:border-yellow-500/60 transition"
             />
             {query && (
-              <button
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition"
-              >
+              <button onClick={() => setQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition">
                 <X size={14} />
               </button>
             )}
           </div>
 
-          {/* Filter toggle */}
           <button
             onClick={() => setShowFilter(f => !f)}
             className={`flex items-center gap-2 px-4 py-3 border text-sm transition ${
@@ -109,13 +139,10 @@ export default function SearchClient({ initialRestaurants }: { initialRestaurant
             <SlidersHorizontal size={14} />
             Filters
             {filterCount > 0 && (
-              <span className="bg-black/30 text-current text-xs px-1.5 py-0.5 rounded-full">
-                {filterCount}
-              </span>
+              <span className="bg-black/30 text-current text-xs px-1.5 py-0.5 rounded-full">{filterCount}</span>
             )}
           </button>
 
-          {/* Sort */}
           <div className="relative">
             <select
               value={sort}
@@ -134,50 +161,85 @@ export default function SearchClient({ initialRestaurants }: { initialRestaurant
         {/* ── Filter panel ────────────────────────────────────────── */}
         {showFilter && (
           <div className="mb-4 p-5 bg-[#0f0f0f] border border-yellow-600/15 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
             {/* Category */}
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">Category</p>
               <div className="flex flex-wrap gap-2">
-                <FilterChip active={!category} onClick={() => setCategory('')} label="All" />
+                <FilterChip active={!category} onClick={() => setCategory('')} label="ทั้งหมด" />
                 {categories.map(c => (
-                  <FilterChip
-                    key={c}
-                    active={category === c}
-                    onClick={() => setCategory(category === c ? '' : c)}
-                    label={c}
-                  />
+                  <FilterChip key={c} active={category === c} onClick={() => setCategory(category === c ? '' : c)} label={c} />
                 ))}
               </div>
             </div>
 
-            {/* Location */}
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">Location</p>
-              <div className="flex flex-wrap gap-2">
-                <FilterChip active={!location} onClick={() => setLocation('')} label="All" />
-                {locations.map(l => (
-                  <FilterChip
-                    key={l}
-                    active={location === l}
-                    onClick={() => setLocation(location === l ? '' : l)}
-                    label={l}
-                  />
-                ))}
+            {/* Province → District hierarchy */}
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">จังหวัด</p>
+                <div className="flex flex-wrap gap-2">
+                  <FilterChip active={!province} onClick={() => { setProvince(''); setDistrict('') }} label="ทั้งหมด" />
+                  {provinces.map(p => (
+                    <FilterChip key={p} active={province === p} onClick={() => setProvince(province === p ? '' : p)} label={p} />
+                  ))}
+                </div>
               </div>
+              {province && districts.length > 0 && (
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">เขต / อำเภอ</p>
+                  <div className="flex flex-wrap gap-2">
+                    <FilterChip active={!district} onClick={() => setDistrict('')} label="ทั้งหมด" />
+                    {districts.map(d => (
+                      <FilterChip key={d} active={district === d} onClick={() => setDistrict(district === d ? '' : d)} label={d} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Rating */}
-            <div>
-              <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">Minimum Rating</p>
-              <div className="flex flex-wrap gap-2">
-                {RATING_OPTIONS.map(o => (
-                  <FilterChip
-                    key={o.value}
-                    active={minRating === o.value}
-                    onClick={() => setMinRating(minRating === o.value ? '' : o.value)}
-                    label={o.label}
-                  />
-                ))}
+            {/* Rating + Distance */}
+            <div className="flex flex-col gap-4">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-widest mb-3">Minimum Rating</p>
+                <div className="flex flex-wrap gap-2">
+                  {RATING_OPTIONS.map(o => (
+                    <FilterChip key={o.value} active={minRating === o.value} onClick={() => setMinRating(minRating === o.value ? '' : o.value)} label={o.label} />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <p className="text-xs text-gray-500 uppercase tracking-widest">ระยะทาง</p>
+                  {!userLat && (
+                    <button
+                      onClick={requestLocation}
+                      disabled={locating}
+                      className="flex items-center gap-1 text-xs text-yellow-500 border border-yellow-500/30 px-2 py-0.5 hover:bg-yellow-500/10 transition"
+                    >
+                      <Navigation size={10} />
+                      {locating ? 'กำลังหา…' : 'ใช้ตำแหน่งของฉัน'}
+                    </button>
+                  )}
+                  {userLat && <span className="text-xs text-green-500">📍 พบตำแหน่ง</span>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {DISTANCE_OPTIONS.map(o => (
+                    <FilterChip
+                      key={o.value}
+                      active={maxDistance === o.value}
+                      onClick={() => {
+                        if (o.value && !userLat) requestLocation()
+                        setMaxDistance(maxDistance === o.value ? '' : o.value)
+                      }}
+                      label={o.label}
+                      disabled={!!o.value && !userLat}
+                    />
+                  ))}
+                </div>
+                {!userLat && maxDistance && (
+                  <p className="text-xs text-yellow-600 mt-2">กรุณาอนุญาตการเข้าถึงตำแหน่งก่อน</p>
+                )}
               </div>
             </div>
           </div>
@@ -212,20 +274,17 @@ export default function SearchClient({ initialRestaurants }: { initialRestaurant
         {filtered.length === 0 ? (
           <div className="py-20 text-center">
             <p className="font-playfair text-2xl text-yellow-600/30 mb-3">No results found</p>
-            <p className="text-gray-600 text-sm mb-6">
-              Try adjusting your search or removing some filters.
-            </p>
+            <p className="text-gray-600 text-sm mb-6">Try adjusting your search or removing some filters.</p>
             <button
               onClick={clearAll}
-              className="px-6 py-2 border border-yellow-500/40 text-yellow-500 text-sm
-                         hover:bg-yellow-500 hover:text-black transition"
+              className="px-6 py-2 border border-yellow-500/40 text-yellow-500 text-sm hover:bg-yellow-500 hover:text-black transition"
             >
               Clear filters
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map(r => <RestaurantCard key={r._id} r={r} />)}
+            {filtered.map(r => <RestaurantCard key={r._id} r={r} userLat={userLat} userLng={userLng} />)}
           </div>
         )}
       </div>
@@ -236,15 +295,18 @@ export default function SearchClient({ initialRestaurants }: { initialRestaurant
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function FilterChip({
-  label, active, onClick,
-}: { label: string; active: boolean; onClick: () => void }) {
+  label, active, onClick, disabled = false,
+}: { label: string; active: boolean; onClick: () => void; disabled?: boolean }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={`px-3 py-1 text-xs border transition ${
         active
           ? 'bg-yellow-500 text-black border-yellow-500'
-          : 'border-yellow-600/20 text-gray-400 hover:border-yellow-500/50'
+          : disabled
+            ? 'border-yellow-600/10 text-gray-700 cursor-not-allowed'
+            : 'border-yellow-600/20 text-gray-400 hover:border-yellow-500/50'
       }`}
     >
       {label}
@@ -252,9 +314,25 @@ function FilterChip({
   )
 }
 
-function RestaurantCard({ r }: { r: RestaurantItem }) {
+function haversineMetres(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function RestaurantCard({ r, userLat, userLng }: { r: RestaurantItem; userLat?: number; userLng?: number }) {
   const ratingNum = parseFloat(String(r.averageRating))
   const hasRating = !isNaN(ratingNum)
+
+  const distanceText = useMemo(() => {
+    if (userLat == null || userLng == null || r.lat == null || r.lng == null) return null
+    const m = haversineMetres(userLat, userLng, r.lat, r.lng)
+    return m < 1000 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`
+  }, [userLat, userLng, r.lat, r.lng])
 
   return (
     <div className="group bg-[#0f0f0f] border border-yellow-600/15 hover:border-yellow-500/50
@@ -268,11 +346,16 @@ function RestaurantCard({ r }: { r: RestaurantItem }) {
             <span className="text-xs text-yellow-600/50 uppercase tracking-wider">{r.category}</span>
           )}
         </Link>
-        <div className="flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/20 px-2 py-1 shrink-0">
-          <Star size={10} className="text-yellow-400 fill-yellow-400" />
-          <span className="text-yellow-400 text-xs font-medium">
-            {hasRating ? ratingNum.toFixed(1) : '—'}
-          </span>
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center gap-1 bg-yellow-500/10 border border-yellow-500/20 px-2 py-1">
+            <Star size={10} className="text-yellow-400 fill-yellow-400" />
+            <span className="text-yellow-400 text-xs font-medium">{hasRating ? ratingNum.toFixed(1) : '—'}</span>
+          </div>
+          {distanceText && (
+            <span className="text-xs text-green-500/80 flex items-center gap-1">
+              <Navigation size={9} /> {distanceText}
+            </span>
+          )}
         </div>
       </div>
 
@@ -281,7 +364,14 @@ function RestaurantCard({ r }: { r: RestaurantItem }) {
       <div className="flex flex-col gap-2.5 flex-1">
         <div className="flex items-start gap-2">
           <MapPin size={12} className="text-yellow-600/50 mt-0.5 shrink-0" />
-          <p className="text-gray-400 text-xs leading-relaxed">{r.address}</p>
+          <div>
+            <p className="text-gray-400 text-xs leading-relaxed">{r.address}</p>
+            {(r.district || r.province) && (
+              <p className="text-gray-600 text-xs mt-0.5">
+                {[r.district, r.province].filter(Boolean).join(', ')}
+              </p>
+            )}
+          </div>
         </div>
         {r.tel && (
           <div className="flex items-center gap-2">
@@ -296,9 +386,7 @@ function RestaurantCard({ r }: { r: RestaurantItem }) {
           <Clock size={11} className="text-green-500/70" />
           <span className="text-green-500/80 text-xs">{r.opentime} – {r.closetime}</span>
         </div>
-        <span className="text-gray-700 text-xs">
-          {r.reviewCount} {r.reviewCount === 1 ? 'review' : 'reviews'}
-        </span>
+        <span className="text-gray-700 text-xs">{r.reviewCount} {r.reviewCount === 1 ? 'review' : 'reviews'}</span>
       </div>
 
       <div className="flex gap-2 pt-1">

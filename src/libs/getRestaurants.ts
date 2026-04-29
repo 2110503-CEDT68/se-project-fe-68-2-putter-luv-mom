@@ -4,6 +4,8 @@ export interface RestaurantItem {
   _id: string
   name: string
   address: string
+  province?: string
+  district?: string
   tel: string
   opentime: string
   closetime: string
@@ -11,6 +13,8 @@ export interface RestaurantItem {
   reviewCount: number
   category?: string
   imageUrl?: string
+  lat?: number
+  lng?: number
 }
 
 export async function getRestaurants(params?: {
