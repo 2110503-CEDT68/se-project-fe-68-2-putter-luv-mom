@@ -15,37 +15,26 @@ export interface PreorderData {
   updatedAt: string
 }
 
-// Admin: GET /preorders returns all. Regular user: must fetch per venueId.
+// Admin → GET /preorders (all). Regular user → GET /preorders/mine (own across venues).
 export async function getAllPreorders(token: string, role?: string): Promise<{ success: boolean; data: PreorderData[] }> {
   const headers = { Authorization: `Bearer ${token}` }
+  const path = role === 'admin' ? '/api/v1/preorders' : '/api/v1/preorders/mine'
 
-  if (role !== 'admin') {
-    // Get all restaurant IDs, then fetch each preorder in parallel
-    const venuesRes = await fetch(`${API_URL}/api/v1/restaurants?limit=100`, { headers, cache: 'no-store' })
-    if (!venuesRes.ok) throw new Error(`Failed to fetch restaurants (${venuesRes.status})`)
-    const venuesJson = await venuesRes.json()
-    const venueIds: string[] = (venuesJson.data ?? []).map((v: { _id: string }) => v._id)
-
-    const results = await Promise.all(
-      venueIds.map(async (id) => {
-        const r = await fetch(`${API_URL}/api/v1/preorders/${id}`, { headers, cache: 'no-store' })
-        if (!r.ok) return null
-        const j = await r.json()
-        const d = j.data
-        if (!d || !d.items || d.items.length === 0) return null
-        return { _id: d._id ?? id, venueId: id, items: d.items, total: d.total ?? 0, updatedAt: d.updatedAt ?? '' } as PreorderData
-      })
-    )
-    const data = results.filter(Boolean) as PreorderData[]
-    return { success: true, data }
-  }
-
-  // Admin path
-  const res = await fetch(`${API_URL}/api/v1/preorders`, { headers, cache: 'no-store' })
+  const res = await fetch(`${API_URL}${path}`, { headers, cache: 'no-store' })
   if (res.status === 404) return { success: true, data: [] }
   if (!res.ok) throw new Error(`Failed to fetch preorders (${res.status})`)
   const json = await res.json()
-  return { ...json, data: json.data ?? [] }
+  const list = (json.data ?? []) as Array<{ _id?: string; venueId?: string; items?: PreorderItemData[]; total?: number; updatedAt?: string }>
+  const data: PreorderData[] = list
+    .filter(o => Array.isArray(o.items) && o.items.length > 0 && typeof o.venueId === 'string')
+    .map(o => ({
+      _id: o._id ?? '',
+      venueId: o.venueId as string,
+      items: o.items as PreorderItemData[],
+      total: o.total ?? 0,
+      updatedAt: o.updatedAt ?? '',
+    }))
+  return { success: true, data }
 }
 
 export async function updatePreorderItemQty(venueId: string, menuId: string, quantity: number, token?: string): Promise<void> {
