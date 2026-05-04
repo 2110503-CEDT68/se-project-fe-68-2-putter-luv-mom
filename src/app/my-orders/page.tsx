@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import { usePreorder } from '@/hooks/usePreorder'
 import { getAllPreorders, PreorderData, PreorderItemData, confirmPreorder, removePreorderItem } from '@/libs/getAllPreorders'
+import { useDispatch } from 'react-redux'
+import { addToPreorder, setQuantityBounded } from '@/redux/features/preorderSlice'
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000').replace(/\/$/, '')
 
@@ -16,7 +18,8 @@ export default function MyOrdersPage() {
   const { data: session, status } = useSession()
   const token = (session?.user as any)?.token as string | undefined
   const role  = (session?.user as any)?.role  as string | undefined
-  const { add } = usePreorder()
+  const { add: _add } = usePreorder()
+  const dispatch = useDispatch()
 
   const [orders, setOrders]       = useState<PreorderData[]>([])
   const [loading, setLoading]     = useState(true)
@@ -124,7 +127,8 @@ export default function MyOrdersPage() {
 
   function handleReorder(order: PreorderData) {
     for (const item of order.items) {
-      add({ _id: item.menuId, venueId: order.venueId, name: item.name, price: item.price, quantity: item.quantity })
+      dispatch(addToPreorder({ _id: item.menuId, venueId: order.venueId, name: item.name, price: item.price, category: '' }))
+      dispatch(setQuantityBounded({ id: item.menuId, quantity: item.quantity }))
     }
     showToast('Items added to pre-order cart')
   }
